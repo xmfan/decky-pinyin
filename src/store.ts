@@ -6,6 +6,8 @@ export const rpc = {
   get: callable<[], State>("get_state"),
   start: callable<[], State>("start"),
   stop: callable<[], State>("stop"),
+  capture: callable<[], State>("capture"),
+  dismiss: callable<[], State>("dismiss"),
   save: callable<[settings: Settings], State>("save_settings"),
 };
 

@@ -1,7 +1,7 @@
 {
   "name": "decky-pinyin",
-  "version": "0.2.0",
-  "description": "Offline live Mandarin pinyin and English subtitles for Steam Deck",
+  "version": "0.3.0",
+  "description": "Offline on-demand Mandarin pinyin and English subtitles for Steam Deck",
   "type": "module",
   "license": "GPL-3.0-only",
   "scripts": {

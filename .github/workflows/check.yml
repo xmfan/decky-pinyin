@@ -24,6 +24,10 @@ jobs:
       - run: node scripts/verify_overlay.mjs
       - run: python scripts/benchmark.py --output artifacts/benchmark-ci.json
       - run: python scripts/package.py
+      - name: Verify manual PipeWire capture
+        run: |
+          docker build -f tests/Dockerfile.capture -t decky-pinyin-capture-test .
+          docker run --rm --network none -v "$PWD:/work:ro" -w /work -e PYTHONPATH=/work/build/decky-pinyin/vendor decky-pinyin-capture-test /work/build/decky-pinyin/runtime/bin/python3 scripts/verify_capture.py
       - uses: actions/upload-artifact@v4
         with:
           name: decky-pinyin-offline

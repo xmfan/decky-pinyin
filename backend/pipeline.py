@@ -106,17 +106,19 @@ class Pipeline:
     async def _translate(self):
         while True:
             revision, text = await self.pending.get()
-            start = time.perf_counter()
-            try:
-                translation = await asyncio.to_thread(self.translator.translate, text)
-                error = None
-            except Exception as exc:
-                translation, error = "", str(exc)
-            # A finished translation for old dialogue must never overwrite new text.
-            if revision != self.revision:
-                continue
-            self.current = {**self.current, "translation": translation, "translating": False,
-                            "translation_ms": round((time.perf_counter() - start) * 1000, 1)}
-            if error:
-                self.current["translation_error"] = error
-            await self.emit(self.current)
+            await self.translate_item(revision, text)
+
+    async def translate_item(self, revision, text):
+        start = time.perf_counter()
+        try:
+            translation = await asyncio.to_thread(self.translator.translate, text)
+            error = None
+        except Exception as exc:
+            translation, error = "", str(exc)
+        if revision != self.revision:
+            return
+        self.current = {**self.current, "translation": translation, "translating": False,
+                        "translation_ms": round((time.perf_counter() - start) * 1000, 1)}
+        if error:
+            self.current["translation_error"] = error
+        await self.emit(self.current)

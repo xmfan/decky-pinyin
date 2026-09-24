@@ -31,4 +31,6 @@ export interface State {
   result: Result | null;
   settings: Settings;
   installed: boolean;
+  busy?: boolean;
+  input_status?: string;
 }

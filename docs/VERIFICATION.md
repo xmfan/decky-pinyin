@@ -1,6 +1,6 @@
 # Verification record
 
-Development checks performed September 23, 2026. The full user objective remains open until testing on a physical Steam Deck.
+Development checks performed September 23–24, 2026. The full user objective remains open until testing on a physical Steam Deck.
 
 | Requirement | Evidence | Remaining |
 | --- | --- | --- |
@@ -21,6 +21,14 @@ Host benchmark (20 runs, caches cleared, two subtitle lines, two threads per eng
 Capture testing found a real buffer-retention stall with the initial zero-copy PipeWire source. `always-copy=true` returns compositor buffers immediately and fixes the tested 30 FPS stream. The synthetic provider also requires its own `sync=false`; that is test setup, not a change to the SteamOS capture source. See `artifacts/capture-linux.txt`.
 
 Physical acceptance procedure: `docs/STEAM_DECK_TEST.md`. No reachable Steam Deck was configured during development. The user chose manual ZIP installation; translation currently defaults to English.
+
+## Manual capture update (0.3.0)
+
+The user installed 0.2.0 on a Steam Deck: the plugin loaded, but capture reported “Gamescope stopped supplying frames” and no overlay appeared. The original Decky Translator worked on the same device. The earlier synthetic streaming result above therefore did not establish Gamescope compatibility.
+
+0.3.0 switches runtime capture to an L4-triggered PNG snapshot with short raw RGB fallback, following the reference plugin's approach. Tap captures; holding for 0.65 seconds dismisses. Models stay loaded. The overlay persists until dismissed or replaced. The panel provides Capture now / Dismiss overlay when controller input is unavailable.
+
+37 Python tests pass, including HID decoding, tap/hold semantics, capture cancellation/reaping, PNG-to-RGB fallback, stale/dismissed result suppression, and a real worker process that loads models once and survives repeated capture failures. TypeScript and production builds pass. Browser verification confirms persistence beyond the former eight-second expiry. GitHub CI runs real PipeWire PNG/RGB integration. Physical Deck capture, L4 input and Steam composition remain pending for this update.
 
 ## Experimental GPU OCR (0.2.0)
 

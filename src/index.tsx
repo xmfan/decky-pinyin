@@ -25,20 +25,29 @@ function Panel({ store }: { store: Store }) {
   const running = state.status === "running" || state.status === "loading";
   const save = <K extends keyof Settings>(key: K, value: Settings[K]) => void action(() => rpc.save({ ...state.settings, [key]: value }));
   return <>
-    <PanelSection title="Live pinyin">
+    <PanelSection title="Pinyin on demand">
       <PanelSectionRow><div style={{ fontSize: 13, color: state.status === "error" ? "#ffb4ab" : "#b8c9d9", marginBottom: 10 }}>
         {state.message}
         {!overlaySupported && <p>This Steam version’s overlay hook is unavailable. Update Decky before starting.</p>}
         {!state.installed && <p>Install the full offline ZIP, including models and runtime.</p>}
         {error && <p>{error}</p>}
+        {state.input_status && <p>{state.input_status}</p>}
       </div></PanelSectionRow>
       <PanelSectionRow><ButtonItem disabled={busy || (!running && (!overlaySupported || !state.installed))} layout="below" onClick={() => void action(async () => {
         const next = await (running ? rpc.stop() : rpc.start());
         if (!running && next.status !== "error") Navigation.CloseSideMenus();
         return next;
-      })}>{running ? "Stop live pinyin" : "Start live pinyin"}</ButtonItem></PanelSectionRow>
+      })}>{running ? "Disable L4 shortcut" : "Enable L4 shortcut"}</ButtonItem></PanelSectionRow>
+      {state.status === "running" && <>
+        <PanelSectionRow><ButtonItem disabled={busy} layout="below" onClick={() => void action(async () => {
+          Navigation.CloseSideMenus();
+          await new Promise((resolve) => setTimeout(resolve, 300));
+          return rpc.capture();
+        })}>{state.busy ? "Capture latest screen" : "Capture now"}</ButtonItem></PanelSectionRow>
+        <PanelSectionRow><ButtonItem disabled={busy} layout="below" onClick={() => void action(rpc.dismiss)}>Dismiss overlay</ButtonItem></PanelSectionRow>
+      </>}
       <PanelSectionRow><div style={{ fontSize: 12, lineHeight: 1.5, color: "#a7b7c6" }}>
-        Chinese → pinyin + English. All processing stays on your Deck. Close this menu to see the overlay. Settings changes stop capture; press Start to resume.
+        Tap L4 to capture Chinese text. Hold L4 for 0.65 seconds to dismiss. Results stay visible until dismissed or replaced. Models stay loaded while enabled. Settings changes disable the shortcut; enable it again afterward.
       </div></PanelSectionRow>
     </PanelSection>
     <PanelSection title="Reading area">
@@ -57,15 +66,12 @@ function Panel({ store }: { store: Store }) {
       <PanelSectionRow><DropdownItem label="OCR processor" selectedOption={state.settings.ocr_device} disabled={busy}
         rgOptions={[{ data: "auto", label: "Try GPU · fall back to CPU" }, { data: "gpu", label: "GPU · experimental" }, { data: "cpu", label: "CPU" }]}
         onChange={(option) => save("ocr_device", option.data)} /></PanelSectionRow>
-      <PanelSectionRow><DropdownItem label="Check text every" selectedOption={state.settings.interval_ms} disabled={busy}
-        rgOptions={[{ data: 250, label: "250 ms · more CPU" }, { data: 500, label: "500 ms · balanced" }, { data: 1000, label: "1 second · less CPU" }]}
-        onChange={(option) => save("interval_ms", option.data)} /></PanelSectionRow>
       <PanelSectionRow><DropdownItem label="CPU threads per model" selectedOption={state.settings.threads} disabled={busy}
         rgOptions={[{ data: 1, label: "1 · light" }, { data: 2, label: "2 · balanced" }, { data: 3, label: "3" }, { data: 4, label: "4 · more CPU" }]}
         onChange={(option) => save("threads", option.data)} /></PanelSectionRow>
       {state.result && <PanelSectionRow><div style={{ fontSize: 12, lineHeight: 1.5 }}>
         OCR ({state.result.ocr_device}) {state.result.ocr_ms} ms · Pinyin {state.result.pinyin_ms} ms<br />
-        Translation {state.result.translation_ms} ms · {state.result.skipped} unchanged frames skipped
+        Translation {state.result.translation_ms} ms
         {state.result.ocr_notice && <p>{state.result.ocr_notice}</p>}
         {state.result.translation_error && <p>{state.result.translation_error}</p>}
       </div></PanelSectionRow>}

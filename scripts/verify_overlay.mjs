@@ -20,6 +20,7 @@ await writeFile(path.join(root, ".cache/overlay-preview.html"), `<!doctype html>
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH });
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  await page.clock.install();
   const errors = [];
   page.on("pageerror", (error) => errors.push(String(error)));
   await page.goto(pathToFileURL(path.join(root, ".cache/overlay-preview.html")).href);
@@ -41,6 +42,8 @@ try {
     }
   };
   await checkBounds();
+  await page.clock.fastForward(9000);
+  assert(await page.locator("ruby").count() > 0, "Manual capture disappeared while reading");
   await page.evaluate(() => window.preview.stale());
   await page.waitForTimeout(100);
   assert(await page.locator("ruby").count() > 0, "Old RPC state replaced newer live result");

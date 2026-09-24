@@ -1,5 +1,4 @@
 import { findModuleChild, useQuickAccessVisible } from "@decky/ui";
-import { useEffect, useState } from "react";
 import { Store, useStateSnapshot } from "./store";
 
 // Steam's composition hook maintains the notification layer while gameplay keeps focus.
@@ -26,13 +25,8 @@ function Composition() {
 export function Overlay({ store }: { store: Store }) {
   const state = useStateSnapshot(store);
   const menuOpen = useQuickAccessVisible();
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
   const result = state?.result;
-  if (!overlaySupported || menuOpen || state?.status !== "running" || !result?.lines.length || now - store.received > 8000) return null;
+  if (!overlaySupported || menuOpen || state?.status !== "running" || !result?.lines.length) return null;
   const bottom = state.settings.region === "upper";
   return <>
     <Composition />

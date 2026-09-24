@@ -4,7 +4,10 @@
   "api_version": 1,
   "flags": [],
   "publish": {
-    "tags": ["Language", "Accessibility"],
-    "description": "Local live Chinese OCR, neural pinyin and English translation."
+    "tags": [
+      "Language",
+      "Accessibility"
+    ],
+    "description": "Local Chinese OCR, neural pinyin and English translation on L4."
   }
 }

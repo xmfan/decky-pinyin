@@ -1,11 +1,13 @@
-"""Persistent Gamescope/PipeWire capture with a one-frame mailbox."""
+"""On-demand Gamescope snapshots; legacy streaming retained for regression tests."""
 import asyncio
 import json
+import io
 import os
 import shutil
 import time
 
 import numpy as np
+from PIL import Image
 
 from .pipeline import Frame
 
@@ -47,6 +49,74 @@ async def terminate(proc):
     except asyncio.TimeoutError:
         proc.kill()
         await proc.wait()
+
+
+class SnapshotCapture:
+    """A bounded capture on demand; no persistent stream or frame-rate conversion.
+
+    The PNG snapshot / short raw-buffer approach follows Decky-Translator (GPL-3.0).
+    """
+    def __init__(self):
+        self.pngenc = None
+        self.number = 0
+        self.timeout = 5
+
+    async def _command(self, command, timeout):
+        proc = await asyncio.create_subprocess_exec(*command, env=system_env(),
+            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        communication = asyncio.create_task(proc.communicate())
+        try:
+            try:
+                out, err = await asyncio.wait_for(asyncio.shield(communication), timeout)
+            except asyncio.TimeoutError:
+                await terminate(proc)
+                out, err = await communication
+            return out, err.decode(errors="replace")[-1200:], proc.returncode
+        finally:
+            await terminate(proc)
+            if not communication.done():
+                communication.cancel()
+            await asyncio.gather(communication, return_exceptions=True)
+
+    async def take(self):
+        for binary in ("pw-dump", "gst-launch-1.0"):
+            if not shutil.which(binary):
+                raise RuntimeError(f"Missing SteamOS capture component: {binary}")
+        out, err, code = await self._command(["pw-dump"], 5)
+        if code:
+            raise RuntimeError("Cannot connect to PipeWire: " + err)
+        node, width, height = gamescope_node(json.loads(out))
+        if self.pngenc is None:
+            self.pngenc = False
+            if shutil.which("gst-inspect-1.0"):
+                _, _, code = await self._command(["gst-inspect-1.0", "--exists", "pngenc"], 2)
+                self.pngenc = code == 0
+        failures = []
+        # Try the reference plugin's PNG snapshot first, then its raw-buffer method.
+        for png in ([True, False] if self.pngenc else [False]):
+            command = ["gst-launch-1.0", "-q", "-e", "pipewiresrc", f"path={node}",
+                       "do-timestamp=true", f"num-buffers={5 if png else 3}",
+                       "!", "videoconvert", "!", "videoscale", "!",
+                       f"video/x-raw,format=RGB,width={width},height={height},pixel-aspect-ratio=1/1"]
+            if png:
+                command += ["!", "pngenc", "snapshot=true"]
+            command += ["!", "fdsink", "fd=1", "sync=false", "async=false"]
+            out, err, code = await self._command(command, self.timeout)
+            try:
+                if png:
+                    with Image.open(io.BytesIO(out)) as image:
+                        rgb = np.asarray(image.convert("RGB")).copy()
+                else:
+                    size = width * height * 3
+                    count = len(out) // size
+                    if not count:
+                        raise ValueError("No complete RGB frame")
+                    rgb = np.frombuffer(out[(count - 1) * size:count * size], np.uint8).reshape(height, width, 3)
+                self.number += 1
+                return Frame(rgb, time.monotonic(), self.number)
+            except (OSError, ValueError) as exc:
+                failures.append(f"{'PNG' if png else 'RGB'}: {len(out)} bytes, exit={code}; {err or str(exc)}")
+        raise RuntimeError("Screen capture failed. " + " | ".join(failures))
 
 
 class PipeWireCapture:

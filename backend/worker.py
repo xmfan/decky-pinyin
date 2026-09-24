@@ -28,22 +28,30 @@ async def emit(event):
 
 async def run(args):
     from backend.config import Settings
-    from backend.capture import PipeWireCapture
+    from backend.capture import SnapshotCapture
     from backend.engines import OcrEngine, PinyinEngine, TranslationEngine
-    from backend.pipeline import Pipeline
+    from backend.manual import ManualSession
     settings = Settings.parse(json.loads(args.settings))
     await emit({"type": "status", "status": "loading", "message": "Loading local models…"})
     ocr = await asyncio.to_thread(OcrEngine, settings)
     pinyin = await asyncio.to_thread(PinyinEngine)
     translator = await asyncio.to_thread(TranslationEngine, args.models, settings.threads) if settings.translation else None
-    capture = PipeWireCapture(settings.interval_ms)
+    session = ManualSession(settings, SnapshotCapture(), ocr, pinyin, translator, emit)
+    reader = asyncio.StreamReader()
+    transport, _ = await asyncio.get_running_loop().connect_read_pipe(
+        lambda: asyncio.StreamReaderProtocol(reader), sys.stdin.buffer)
+    processor = asyncio.create_task(session.run())
     try:
-        await capture.start()
         label = "GPU-assisted OCR" if ocr.device == "gpu" else "CPU OCR"
-        await emit({"type": "status", "status": "running", "message": f"{label} · Listening for Chinese text"})
-        await Pipeline(settings, ocr, pinyin, translator, emit).run(capture)
+        await emit({"type": "status", "status": "running", "busy": False,
+                    "message": f"{label} · Ready. Tap L4 to capture."})
+        while line := await reader.readline():
+            command = json.loads(line)
+            session.command(command.get("action"), command.get("request_id"))
     finally:
-        await capture.close()
+        transport.close()
+        processor.cancel()
+        await asyncio.gather(processor, return_exceptions=True)
 
 
 async def main(args):
