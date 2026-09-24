@@ -10,7 +10,7 @@ import fixture from "../artifacts/overlay-fixture.json";
 const state: State = {
   version: 1,
   status: "running", message: "Local", installed: true, screenshot: "../artifacts/ocr-fixture.png",
-  settings: { enabled: true, chinese_script: "auto", tts_auto: false, translation: true, tone_style: "marks", font_size: 14, confidence: .65, threads: 2, ocr_device: "auto" },
+  settings: { enabled: true, chinese_script: "auto", tts_auto: false, translation: true, tone_style: "marks", font_size: 10, confidence: .65, threads: 2, ocr_device: "auto" },
   result: fixture,
 };
 const store = new Store();
@@ -28,6 +28,7 @@ let starts = 0;
 const speechRequests: number[] = [];
 const captures: { overlayVisible: boolean; menuClosed: boolean; script: unknown }[] = [];
 (window as any).testRpc = async (name: string, ...args: unknown[]) => {
+  if (name === "save_settings") backendState = { ...backendState, version: backendState.version + 1, settings: args[0] as State["settings"] };
   if (name === "get_hidraw_button_state") return { success: true, buttons };
   if (name === "start") { starts++; backendState = { ...backendState, version: backendState.version + 1, status: "running" }; }
   if (name === "speak") speechRequests.push(args[0] as number);
@@ -118,4 +119,4 @@ if (target !== window) {
   image.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;pointer-events:none;z-index:-1";
   target.document.body.prepend(image);
 }
-createRoot(target.document.getElementById("root")!).render(location.search.includes("panel") ? <Panel store={store} controller={panelController} /> : <Overlay store={store} />);
+createRoot(target.document.getElementById("root")!).render(location.search.includes("panel") ? <><Panel store={store} controller={panelController} />{location.search.includes("preview") && <Overlay store={store} />}</> : <Overlay store={store} />);

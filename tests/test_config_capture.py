@@ -8,7 +8,7 @@ import pytest
 from backend.config import Settings
 
 
-@pytest.mark.parametrize("values", [{"font_size": 0}, {"threads": 32}, {"translation": "true"}, {"confidence": float("nan")}, {"threads": True}, {"shell": "hi"}])
+@pytest.mark.parametrize("values", [{"font_size": 0}, {"font_size": 9}, {"font_size": 33}, {"font_size": 10.5}, {"threads": 32}, {"translation": "true"}, {"confidence": float("nan")}, {"threads": True}, {"shell": "hi"}])
 def test_invalid_settings_rejected(values):
     with pytest.raises(ValueError):
         Settings.parse(values)

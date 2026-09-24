@@ -28,7 +28,7 @@ Model details:
 - g2pM uses sentence context for polyphones; pypinyin supplies phrase corrections and tone formatting. It runs on CPU.
 - OPUS-MT Chinese-to-English uses CTranslate2 int8 and greedy decoding on CPU. Pinyin appears before asynchronous translation; stale translations must not replace newer text.
 - Piper Huayan medium Mandarin runs on CPU. Speak once per capture; stop on capture, dismissal, explicit Stop or unload.
-- Default CPU threads: two per engine. Default/minimum Chinese size: 14 px; pinyin: 0.64×; English: 3 px smaller.
+- Default CPU threads: two per engine. Chinese text slider: 10–32 px in 1 px steps, default/minimum 10 px; pinyin: 0.64×; English: max(8 px, Chinese − 3 px), always smaller than Chinese. Font-only settings changes must preserve the current capture, worker and speech without restarting; other settings retain their existing restart behavior.
 
 Inference refuses IP socket connections. Only settings persist; the temporary capture PNG is deleted after decoding. No screenshot/text history or telemetry. Heavy inference dependencies stay in the bundled worker, separate from Decky's Python environment.
 

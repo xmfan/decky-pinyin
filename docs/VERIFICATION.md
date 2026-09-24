@@ -113,3 +113,9 @@ With ready labels visible, L4 released before 200 ms refreshes through the exist
 Card/toolbar backgrounds are 80% opaque (cards were 94%); screen dimming is 8% (was 12%). Text opacity is unchanged. Browser fixtures record the new appearance and assert both alpha values.
 
 TypeScript/build and browser tests pass, including refresh on release only, both script selections, hidden old labels during recapture, ignored busy taps, long holds without repeats/refresh, short L5 no-op, full chord cancellation and unload during a press. Existing overlay layout, multi-window, speech, updater and capture regressions pass. Actual Deck button timing, new background readability and update installation remain device checks.
+
+## Smaller adjustable fonts (0.7.6)
+
+The Display section moves above Updates and exposes the existing Text size control as 10–32 px in 1 px steps, with a numeric px readout. Fresh installs default to 10 px; saved choices remain. Pinyin scales at 0.64× Chinese. English uses max(8 px, Chinese − 3 px), keeping it smaller than Chinese across the entire range (12 px Chinese → 9 px English).
+
+Font-only saves now persist and notify without stopping inference/speech or clearing the captured image/result. Other settings still use the existing restart path. Seventeen targeted Python checks pass, covering accepted sizes and persistence, range/type rejection, preserved capture/speech/request state during font changes, and existing plugin lifecycle behavior. Browser checks move the actual panel slider through 32, 10, 11 and 12 px, assert matching Chinese/pinyin/English CSS sizes and screen bounds, and retain the captured labels. Existing overlay, hotkey, update and speech checks pass, as do TypeScript and production build. Physical Deck readability and adjustment behavior still require device confirmation.

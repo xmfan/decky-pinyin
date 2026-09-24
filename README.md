@@ -8,7 +8,7 @@ This repository is public because it makes downloading and installing updates di
 
 ## Install
 
-1. Download **Decky-Pinyin-0.7.5-offline.zip** from [Releases](https://github.com/xmfan/decky-pinyin/releases/tag/v0.7.5) and copy it to your Deck.
+1. Download **Decky-Pinyin-0.7.6-offline.zip** from [Releases](https://github.com/xmfan/decky-pinyin/releases/tag/v0.7.6) and copy it to your Deck.
 2. In Decky settings, enable Developer Mode. Open **Developer → Install Plugin from ZIP** and select the file.
 3. Launch a game in **Gaming Mode**, open **Decky Pinyin**, and allow the local models to load. Shortcuts are enabled by default. Disable other plugins using L4/L5.
 
@@ -28,7 +28,7 @@ The offline ZIP includes the models, voice, dependencies and Python runtime. No 
 Release the key before capturing again. The panel also has **Capture Simplified**, **Capture Traditional** and **Dismiss overlay** buttons. Each capture reads the full screen; tap L4 to refresh when the game text changes. Refresh is available once labels appear, not while recognition is still running.
 
 - Translucent dark labels appear near the original text, with a lightly dimmed game behind them. Crowded rows shift upward in reading order; **Previous/Next** shows more labels if they cannot fit.
-- Chinese defaults to **14 px**, pinyin to about **9 px**, and English to **11 px**. Adjust **Text size**, **Pinyin tones**, or **English translation** in the panel.
+- **Display → Text size** adjusts Chinese from **10–32 px** in 1 px steps, with smaller pinyin and English. English stays 2–3 px smaller than Chinese (12 px Chinese → 9 px English). Fresh installs default to the smallest size; updates keep your saved choice. Font changes preserve the current capture and do not restart models—close the panel to see the new size. You can also adjust **Pinyin tones** or toggle **English translation**.
 - Mandarin speech plays automatically after capture. Turn off **Read Chinese after capture** for manual speech, then use a label's speaker icon or **Speak captured Chinese**. Dismissing the overlay stops speech.
 - Disable the shortcuts to unload the models. That preference is remembered. After suspend, enable the shortcuts again if needed.
 

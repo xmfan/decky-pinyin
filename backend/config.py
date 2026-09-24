@@ -9,7 +9,7 @@ class Settings:
     tts_auto: bool = True
     translation: bool = True
     tone_style: str = "marks"
-    font_size: int = 14
+    font_size: int = 10
     confidence: float = 0.65
     threads: int = 2
     ocr_device: str = "auto"
@@ -22,7 +22,7 @@ class Settings:
         if set(raw) - set(values):
             raise ValueError("Unknown setting")
         values.update(raw)
-        for name, lo, hi in (("font_size", 14, 32), ("threads", 1, 4)):
+        for name, lo, hi in (("font_size", 10, 32), ("threads", 1, 4)):
             value = values[name]
             if type(value) is not int or not lo <= value <= hi:
                 raise ValueError(f"{name} must be an integer from {lo} to {hi}")

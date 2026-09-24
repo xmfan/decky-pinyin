@@ -211,6 +211,13 @@ class Plugin:
     async def save_settings(self, values):
         settings = Settings.parse(values)
         async with self.lock:
+            # Font size is frontend-only. Keep the current capture, models and
+            # speech alive while the user adjusts it; no worker restart needed.
+            if replace(self.settings, font_size=settings.font_size) == settings:
+                self.settings = settings
+                self._persist_settings()
+                await self._notify()
+                return await self.get_state()
             restart = self.state["status"] in ("running", "loading") and settings.enabled
             await self._stop()
             self.settings = settings

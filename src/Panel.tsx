@@ -49,16 +49,17 @@ export function Panel({ store, controller }: { store: Store; controller: Control
         {state.input_status && <p>{state.input_status}</p>}
       </div></PanelSectionRow>
     </PanelSection>
-    <UpdatesPanel />
     <PanelSection title="Display">
+      <PanelSectionRow><SliderField label="Text size" value={state.settings.font_size} min={10} max={32} step={1} showValue valueSuffix=" px" disabled={busy}
+        onChange={(value) => save("font_size", value)} /></PanelSectionRow>
+      <PanelSectionRow><div style={{ fontSize: 12, color: "#a7b7c6" }}>Scales Chinese and pinyin, with smaller English underneath. Close the panel to preview the current capture.</div></PanelSectionRow>
 
       <PanelSectionRow><ToggleField label="English translation" checked={state.settings.translation} disabled={busy} onChange={(value) => save("translation", value)} /></PanelSectionRow>
       <PanelSectionRow><DropdownItem label="Pinyin tones" selectedOption={state.settings.tone_style} disabled={busy}
         rgOptions={[{ data: "marks", label: "Tone marks · nǐ hǎo" }, { data: "numbers", label: "Numbers · ni3 hao3" }, { data: "none", label: "No tones · ni hao" }]}
         onChange={(option) => save("tone_style", option.data)} /></PanelSectionRow>
-      <PanelSectionRow><SliderField label="Text size" value={state.settings.font_size} min={14} max={32} step={2} disabled={busy}
-        onChange={(value) => save("font_size", value)} /></PanelSectionRow>
     </PanelSection>
+    <UpdatesPanel />
     <PanelSection title="Speech">
 
       <PanelSectionRow><ButtonItem disabled={busy || !state.result?.lines.length} layout="below" onClick={() => void action(() => rpc.speak(-1))}>Speak captured Chinese</ButtonItem></PanelSectionRow>

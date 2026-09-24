@@ -105,7 +105,7 @@ function ReadingSurface({ store }: { store: Store }) {
               <button aria-label={`Speak Chinese line ${index + 1}`} onClick={() => speak(index)}
                 style={{ color: "#98dfc2", background: "transparent", border: 0, padding: 2, flexShrink: 0, lineHeight: 1 }}><FaVolumeUp size={14} aria-hidden="true" /></button>
             </div>
-            {state.settings.translation && <div style={{ fontSize: Math.max(10, state.settings.font_size - 3), lineHeight: 1.2, color: "#e1e8f2" }}>
+            {state.settings.translation && <div style={{ fontSize: Math.max(8, state.settings.font_size - 3), lineHeight: 1.2, color: "#e1e8f2" }}>
               {line.translation || (result.translating ? "Translating…" : result.translation_error ? "Translation unavailable" : "")}
             </div>}
           </div>;

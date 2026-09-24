@@ -103,7 +103,7 @@ try {
     english: getComputedStyle(el.lastElementChild).fontSize,
     emoji: el.textContent.includes("🔊"),
   }));
-  assert.equal(fonts.chinese, "14px");assert.equal(fonts.english, "11px");
+  assert.equal(fonts.chinese, "10px");assert.equal(fonts.english, "8px");
   assert(parseFloat(fonts.pinyin) < 10);assert.equal(fonts.emoji, false);
   await page.screenshot({path:path.join(root,"artifacts/overlay-bottom-dialogue.png")});
   await page.evaluate(() => window.preview.crowded());
@@ -304,6 +304,26 @@ try {
     assert(await page.getByRole("button",{name:"Check for updates",exact:true}).isEnabled(),"Failed checks must allow retry");
   }
   assert.equal((await page.evaluate(()=>window.preview.installRequests())).length,1,"Failed checks and unsupported installers must not install anything");
+  // Font changes resize the existing capture through the actual panel control.
+  await page.goto(pathToFileURL(path.join(root, ".cache/overlay-preview.html")).href + "?panel&preview");
+  const slider = page.getByLabel("Text size",{exact:true});
+  assert.equal(await slider.getAttribute("min"),"10");
+  assert.equal(await slider.getAttribute("max"),"32");
+  assert.equal(await slider.getAttribute("step"),"1");
+  for (const [key, size] of [["End",32],["Home",10],["ArrowRight",11],["ArrowRight",12]]) {
+    await slider.press(key);
+    await page.waitForFunction(size => document.querySelector('[data-pinyin-overlay-host]')?.shadowRoot?.querySelector('[data-reading-label] ruby') &&
+      getComputedStyle(document.querySelector('[data-pinyin-overlay-host]').shadowRoot.querySelector('[data-reading-label] ruby')).fontSize === `${size}px`,size);
+    await page.waitForTimeout(100);
+    assert.equal(await page.locator("[data-reading-label]").count(),2,"Resizing must retain the current capture");
+    await checkBounds();
+    const resizedFonts = await page.locator("[data-reading-label]").first().evaluate(el=>({
+      pinyin:parseFloat(getComputedStyle(el.querySelector("rt")).fontSize),
+      english:parseFloat(getComputedStyle(el.lastElementChild).fontSize),
+    }));
+    assert(Math.abs(resizedFonts.pinyin - size * .64)<.01);
+    assert.equal(resizedFonts.english,Math.max(8,size-3));
+  }
   // Steam may render components in a different window than the module loader.
   await page.setViewportSize({width:320,height:240});
   const popup = page.waitForEvent("popup");
@@ -332,7 +352,7 @@ try {
   assert.equal(await game.locator("[data-pinyin-overlay-host]").count(),0,"Stopping must remove the host from its owner document");
   await game.close();
   assert.deepEqual(errors, []);
-  console.log("Overlay verified at 1280×800: ruby alignment, text fit, L4 tap refresh preserving scripts, tap/hold/chord cancellation, L4/L5 script holds, default activation, source-anchored wide labels, non-overlapping pages, compact text and ordered bottom dialogue, host CSS/clipping isolation, separate loader/game windows and viewport scaling, translucent background, direct capture, dismiss cancellation, polling recovery, release selection/checksum validation and native update handoff. Steam composition hook is stubbed; physical Deck still required.");
+  console.log("Overlay verified at 1280×800: ruby alignment, text fit, live 10–32 px font control, L4 tap refresh preserving scripts, tap/hold/chord cancellation, L4/L5 script holds, default activation, source-anchored wide labels, non-overlapping pages, compact text and ordered bottom dialogue, host CSS/clipping isolation, separate loader/game windows and viewport scaling, translucent background, direct capture, dismiss cancellation, polling recovery, release selection/checksum validation and native update handoff. Steam composition hook is stubbed; physical Deck still required.");
 } finally {
   await browser.close();
 }

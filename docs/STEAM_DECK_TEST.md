@@ -1,6 +1,6 @@
 # Steam Deck acceptance test
 
-The user confirmed 0.7.2 capture, speech and overlay work. The following 0.7.5 checks are pending on a physical Steam Deck. Host tests cannot establish Gamescope capture, Steam overlay rendering, or in-game latency/power impact.
+The user confirmed 0.7.2 capture, speech and overlay work. The following 0.7.6 checks are pending on a physical Steam Deck. Host tests cannot establish Gamescope capture, Steam overlay rendering, or in-game latency/power impact.
 
 ## Install and offline inference
 
@@ -41,7 +41,7 @@ If capture fails, inspect Decky's plugin log and run `pw-dump` as the Deck user.
 
 ## Defaults, traditional Chinese and speech
 
-- Fresh install: L4/L5 start enabled, text size is 16 px. Disable and reload: it should stay disabled.
+- Fresh install: L4/L5 start enabled, text size is 10 px. Disable and reload: it should stay disabled.
 - Test short repeated 200 ms captures/dismissals. L4 selects Simplified and L5 selects Traditional, alternating without model reload. Either key dismisses existing labels.
 - Test traditional dialogue with L5 and simplified dialogue with L4: 銀行的行長喜歡旅行。請打開地圖，尋找附近的村莊。
 - Test label positioning at all four edges and with adjacent lines, both handheld and docked. Check per-line English stays with the correct Chinese line.
@@ -54,7 +54,7 @@ If capture fails, inspect Decky's plugin log and run `pw-dump` as the Deck user.
 
 - Confirm 0.7.3 shows labels in Gaming Mode while speech runs. Confirm handheld/docked resizing keeps labels aligned; resizing/opening other Steam windows must not change overlay placement.
 
-- Capture four dialogue rows near the bottom: labels must remain in reading order, shifting upward together without overlap. Confirm 14 px Chinese, smaller pinyin and 11 px English are readable, with compact spacing and a plain speaker icon.
+- Capture four dialogue rows near the bottom: labels must remain in reading order, shifting upward together without overlap. Confirm adjustable Chinese, smaller pinyin and smaller English are readable, with compact spacing and a plain speaker icon.
 
 ## Updates (0.7.4)
 
@@ -70,3 +70,10 @@ If capture fails, inspect Decky's plugin log and run `pw-dump` as the Deck user.
 - Hold either key with labels visible: dismiss exactly once. Keep holding for over a second, then release; nothing should refresh or capture until a new press.
 - Short L5 presses, L4 taps with no labels, and taps while recognizing should not capture. Pressing both L4/L5 cancels the gesture until both are released.
 - Confirm the 80%-opaque dark cards and 8% screen dimming keep text readable while showing more of the game.
+
+## Adjustable fonts (0.7.6)
+
+- Update from the plugin, capture text, then open Display → Text size. Confirm the slider shows the numeric size, goes down to 10 px and moves by 1 px.
+- Set 12 px, close the panel, and confirm the same capture appears with 12 px Chinese, proportional pinyin and 9 px English. Repeat at 10 px (8 px English), 11 px, and a larger value. Check bounds and non-overlap.
+- Changing only font size must not reload the models, dismiss the capture or interrupt current speech. Confirm the selected size survives a plugin reload.
+- Updates retain the saved size; a fresh install defaults to 10 px. Actual readability at small sizes needs a Deck check.
