@@ -1,6 +1,7 @@
 import { addEventListener, definePlugin, removeEventListener, routerHook } from "@decky/api";
 import { staticClasses } from "@decky/ui";
 import { useSyncExternalStore } from "react";
+import { currentVersion } from "./updates";
 import { BsTranslate } from "react-icons/bs";
 import { Controller } from "./Controller";
 import { Panel } from "./Panel";
@@ -24,7 +25,7 @@ export default definePlugin(() => {
   const suspend = steam?.User?.RegisterForPrepareForSystemSuspendProgress?.(() => { void rpc.pause().then(store.update).catch(console.error); });
   return {
     name: "Decky Pinyin",
-    titleView: <div className={staticClasses.Title}>Decky Pinyin · 0.7.3</div>,
+    titleView: <div className={staticClasses.Title}>Decky Pinyin · {currentVersion}</div>,
     content: <Panel store={store} controller={controller} />,
     icon: <BsTranslate />,
     alwaysRender: true,

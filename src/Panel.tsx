@@ -1,4 +1,5 @@
 import { ButtonItem, DropdownItem, Navigation, PanelSection, PanelSectionRow, SliderField, ToggleField } from "@decky/ui";
+import { UpdatesPanel } from "./UpdatesPanel";
 import { useState } from "react";
 import { Controller } from "./Controller";
 import { overlaySupported } from "./Overlay";
@@ -48,6 +49,7 @@ export function Panel({ store, controller }: { store: Store; controller: Control
         {state.input_status && <p>{state.input_status}</p>}
       </div></PanelSectionRow>
     </PanelSection>
+    <UpdatesPanel />
     <PanelSection title="Display">
 
       <PanelSectionRow><ToggleField label="English translation" checked={state.settings.translation} disabled={busy} onChange={(value) => save("translation", value)} /></PanelSectionRow>

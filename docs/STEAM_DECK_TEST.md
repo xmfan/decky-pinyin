@@ -1,6 +1,6 @@
 # Steam Deck acceptance test
 
-The user confirmed 0.7.2 capture, speech and overlay work. The following 0.7.3 checks are pending on a physical Steam Deck. Host tests cannot establish Gamescope capture, Steam overlay rendering, or in-game latency/power impact.
+The user confirmed 0.7.2 capture, speech and overlay work. The following 0.7.4 checks are pending on a physical Steam Deck. Host tests cannot establish Gamescope capture, Steam overlay rendering, or in-game latency/power impact.
 
 ## Install and offline inference
 
@@ -55,3 +55,10 @@ If capture fails, inspect Decky's plugin log and run `pw-dump` as the Deck user.
 - Confirm 0.7.3 shows labels in Gaming Mode while speech runs. Confirm handheld/docked resizing keeps labels aligned; resizing/opening other Steam windows must not change overlay placement.
 
 - Capture four dialogue rows near the bottom: labels must remain in reading order, shifting upward together without overlap. Confirm 14 px Chinese, smaller pinyin and 11 px English are readable, with compact spacing and a plain speaker icon.
+
+## Updates (0.7.4)
+
+- Install 0.7.4 manually once. Confirm the panel shows Installed: 0.7.4 and Check for updates. Merely opening the panel must not check GitHub.
+- With no newer release, confirm the panel says up to date. Disconnect internet: a check must show a recoverable error while local capture/speech continue working.
+- Once a newer release exists, check that its version and size appear. Update must open Decky's native confirmation. Cancel and confirm the current plugin still works; retry and approve.
+- Verify Decky downloads the full ZIP, reloads the plugin, shows the new installed version, preserves settings, and still captures/reads with L4/L5. This replacement/reload is not covered by the browser mock.

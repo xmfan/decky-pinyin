@@ -72,6 +72,41 @@ Object.assign((window as any).preview, {
   speechRequests: () => speechRequests,
   autoSpeech: () => { backendState = { ...backendState, version: backendState.version + 1, settings: { ...backendState.settings, tts_auto: true } }; },
 });
+// Exercise public release checks without network access or a real install.
+let updateMode = "available";
+const updateRequests: string[] = [];
+const installRequests: unknown[][] = [];
+const checksum = "a".repeat(64);
+const release = (version: string, draft = false) => {
+  const name = `Decky-Pinyin-${version}-offline.zip`;
+  const base = `https://github.com/xmfan/decky-pinyin/releases/download/v${version}/`;
+  return {tag_name: `v${version}`, draft, prerelease: true, assets: [
+    {name, size: 380000000, browser_download_url: base + name},
+    {name: name + ".sha256", size: 97, browser_download_url: base + name + ".sha256"},
+  ]};
+};
+const installer = {call: async (...args: unknown[]) => {
+  if(updateMode === "install-error") throw new Error("Installer disconnected");
+  installRequests.push(args);
+}};
+(window as any).DeckyBackend = installer;
+(window as any).testFetch = async (url: string, init: RequestInit) => {
+  updateRequests.push(url);
+  if(updateMode === "offline") throw new Error("Network unavailable");
+  if(updateMode === "timeout") return new Promise((_,reject)=>init.signal!.addEventListener("abort",()=>reject(new Error("aborted"))));
+  if(updateMode === "rate-limit") return new Response("",{status:403});
+  if(url.endsWith(".sha256")) return new Response(updateMode === "bad-checksum" ? "invalid" : `${checksum}  Decky-Pinyin-0.7.10-offline.zip\n`);
+  const latest = release("0.7.10");
+  if(updateMode === "missing-asset") latest.assets.pop();
+  if(updateMode === "foreign-url") latest.assets[0].browser_download_url = "https://example.org/plugin.zip";
+  return new Response(JSON.stringify(updateMode === "current" ? [release("0.7.4")] :
+    updateMode === "older" ? [release("0.7.3")] : [release("0.7.9"), release("99.0.0",true), latest]));
+};
+Object.assign((window as any).preview, {
+  updateMode: (mode: string) => { updateMode = mode; (window as any).DeckyBackend = mode === "missing-installer" ? undefined : installer; },
+  updateRequests: () => updateRequests,
+  installRequests: () => installRequests,
+});
 const panelController = { capture: async (script: string) => (window as any).testRpc("capture", script), dismiss: async () => (window as any).testRpc("dismiss") } as unknown as Controller;
 const target = location.search.includes("other-window") ? window.open("about:blank", "pinyin-game-ui", "width=1280,height=800")! : window;
 if (target !== window) {

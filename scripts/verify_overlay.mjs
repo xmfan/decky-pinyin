@@ -206,6 +206,39 @@ try {
   assert.equal((await page.evaluate(() => window.preview.captures()))[1].script, "simplified");
   assert.equal(await page.getByLabel("Read Chinese after capture").count(), 1);
   assert.equal(await page.getByLabel("Text size").count(), 1);
+  assert.deepEqual(await page.evaluate(()=>window.preview.updateRequests()), [], "Opening the panel must not contact GitHub automatically");
+  const checkUpdate = () => page.getByRole("button", {name:"Check for updates",exact:true}).click();
+  await checkUpdate();
+  await page.getByRole("button",{name:"Update to 0.7.10",exact:true}).waitFor();
+  assert.match(await page.getByRole("status").textContent(), /0.7.10.*prerelease/);
+  await page.getByRole("button",{name:"Update to 0.7.10",exact:true}).click();
+  assert.deepEqual(await page.evaluate(()=>window.preview.installRequests()), [[
+    "utilities/install_plugin", "https://github.com/xmfan/decky-pinyin/releases/download/v0.7.10/Decky-Pinyin-0.7.10-offline.zip",
+    "Decky Pinyin", "0.7.10", "a".repeat(64), 2,
+  ]], "The native installer must receive the exact offline ZIP, version and checksum");
+  assert.match(await page.getByRole("status").textContent(), /Confirm.*Decky/);
+  // The installer call only opens Decky's prompt; cancellation allows retry.
+  assert(await page.getByRole("button",{name:"Update to 0.7.10",exact:true}).isEnabled());
+  for (const mode of ["missing-installer", "install-error"]) {
+    await page.evaluate(mode=>window.preview.updateMode(mode),mode);
+    await page.getByRole("button",{name:"Update to 0.7.10",exact:true}).click();
+    await page.getByRole("alert").waitFor();
+  }
+  for (const mode of ["current", "older"]) {
+    await page.evaluate(mode=>window.preview.updateMode(mode),mode);
+    await checkUpdate();
+    await page.getByRole("status").filter({hasText:"You’re up to date."}).waitFor();
+    assert.equal(await page.getByRole("button",{name:/^Update to/}).count(),0,"No reinstall or downgrade may be offered");
+  }
+  for (const mode of ["missing-asset", "foreign-url", "bad-checksum", "offline", "rate-limit", "timeout"]) {
+    await page.evaluate(mode=>window.preview.updateMode(mode),mode);
+    await checkUpdate();
+    if(mode === "timeout") await page.clock.runFor(21000);
+    await page.getByRole("alert").waitFor();
+    assert.equal(await page.getByRole("button",{name:/^Update to/}).count(),0,"Failed checks must not leave an installable update");
+    assert(await page.getByRole("button",{name:"Check for updates",exact:true}).isEnabled(),"Failed checks must allow retry");
+  }
+  assert.equal((await page.evaluate(()=>window.preview.installRequests())).length,1,"Failed checks and unsupported installers must not install anything");
   // Steam may render components in a different window than the module loader.
   await page.setViewportSize({width:320,height:240});
   const popup = page.waitForEvent("popup");
@@ -234,7 +267,7 @@ try {
   assert.equal(await game.locator("[data-pinyin-overlay-host]").count(),0,"Stopping must remove the host from its owner document");
   await game.close();
   assert.deepEqual(errors, []);
-  console.log("Overlay verified at 1280×800: ruby alignment, text fit, L4/L5 script holds, default activation, source-anchored wide labels, non-overlapping pages, compact text and ordered bottom dialogue, host CSS/clipping isolation, separate loader/game windows and viewport scaling, translucent background, direct capture, dismiss cancellation, polling recovery. Steam composition hook is stubbed; physical Deck still required.");
+  console.log("Overlay verified at 1280×800: ruby alignment, text fit, L4/L5 script holds, default activation, source-anchored wide labels, non-overlapping pages, compact text and ordered bottom dialogue, host CSS/clipping isolation, separate loader/game windows and viewport scaling, translucent background, direct capture, dismiss cancellation, polling recovery, release selection/checksum validation and native update handoff. Steam composition hook is stubbed; physical Deck still required.");
 } finally {
   await browser.close();
 }

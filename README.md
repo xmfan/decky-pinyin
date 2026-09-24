@@ -1,87 +1,52 @@
 # Decky Pinyin
 
-A personal Decky plugin for **Chinese text → tone-marked pinyin + English on demand**, entirely on the Steam Deck. Inspired by [Decky-Translator](https://github.com/cat-in-a-box/Decky-Translator).
+A Decky plugin that adds **pinyin, English translation and Mandarin speech** to Chinese game text on Steam Deck. Recognition and speech run locally. Inspired by [Decky-Translator](https://github.com/cat-in-a-box/Decky-Translator).
 
-**Status:** the user confirmed that 0.7.2 capture, speech and overlay are visible on their Steam Deck. Their photo showed later dialogue rows moving above earlier ones when space ran out. Version 0.7.3 preserves reading order, moves crowded rows upward together, and makes labels more compact. The new layout still needs device confirmation. Deck latency and game performance have not been measured.
+**Status: functional, but still under active development.** Capture, pinyin, translation, speech and the overlay already work. There are remaining UX issues, especially around overlay layout and readability, and those are still being refined.
+
+This repository is public because it makes downloading and installing updates directly from the Decky plugin much easier.
 
 ## Install
 
-1. Copy `out/Decky-Pinyin-0.7.3-offline.zip` to your Steam Deck.
-2. In Decky settings, enable Developer Mode. Open Developer → Install Plugin from ZIP and select the file.
-3. Launch a game in Gaming Mode and open **Decky Pinyin**.
-4. The **L4 / L5 shortcuts are enabled by default**; allow the local models to load. Disable other plugins using these keys.
-5. Close the menu and hold **L4 for Simplified Chinese** or **L5 for Traditional Chinese**, for **0.2 seconds**. With labels visible, hold either key to dismiss; release and hold the desired key for the next capture. A progress indicator shows activation.
-6. The panel also has **Capture Simplified**, **Capture Traditional** and **Dismiss overlay** buttons. Disable the shortcut to unload the models. Settings changes restart models when enabled. Disabling the shortcut is remembered across reloads.
+1. Download **Decky-Pinyin-0.7.4-offline.zip** from [Releases](https://github.com/xmfan/decky-pinyin/releases/tag/v0.7.4) and copy it to your Deck.
+2. In Decky settings, enable Developer Mode. Open **Developer → Install Plugin from ZIP** and select the file.
+3. Launch a game in **Gaming Mode**, open **Decky Pinyin**, and allow the local models to load. Shortcuts are enabled by default. Disable other plugins using L4/L5.
 
-Download the actual `Decky-Pinyin-0.7.3-offline.zip` release asset. If downloading the Actions artifact named `decky-pinyin-offline.zip`, extract that wrapper once and install the inner versioned offline ZIP.
+Use the versioned **offline ZIP**, not the source ZIP. If downloading the Actions artifact `decky-pinyin-offline.zip`, extract that wrapper once and install the inner versioned ZIP.
 
-The ZIP includes Python, dependencies, OCR weights, the neural pinyin model, the translation model, and an offline Mandarin voice. **No model setup, API keys, network connection, or system Python changes are needed on the Deck.** Building the ZIP on a developer machine requires downloads once. Existing Decky Loader and SteamOS PipeWire/GStreamer components are required. Desktop Mode is not currently supported.
+The offline ZIP includes the models, voice, dependencies and Python runtime. No API keys, model setup or system Python changes are needed. Existing Decky Loader and SteamOS are required; Desktop Mode is not supported.
 
-Capture and controller handling are ported from Decky-Translator; see [upstream port details](docs/UPSTREAM_PORT.md). OCR, pinyin and translation use our bundled local models.
+## Capture and read
 
-## Behavior
+| Action | Control |
+| --- | --- |
+| Capture Simplified Chinese | Hold **L4** for **0.2 seconds** |
+| Capture Traditional Chinese | Hold **L5** for **0.2 seconds** |
+| Dismiss visible labels | Hold either key for **0.2 seconds** |
 
-- Simplified and traditional Chinese are selected per capture: L4 selects Simplified, L5 selects Traditional. The key normalizes mixed OCR output for that capture without reloading the models. Tone-marked pinyin stays aligned with the displayed characters.
-- g2pM's small local neural model uses sentence context for polyphones; pypinyin corrects known multi-character phrases and formats tones. Proper names and ambiguous dialogue can still be wrong.
-- PP-OCRv4 mobile detection/recognition with experimental native WebGPU acceleration (Vulkan on Linux). Default Auto mode attempts GPU and reports CPU fallback if unavailable; explicit GPU and CPU modes are also available. Unsupported GPU operations can still use CPU kernels; horizontal Chinese text is the intended input. Stylized fonts, vertical text, motion blur, and very small glyphs may be missed.
-- OPUS-MT Chinese-to-English, converted to int8 CTranslate2, with greedy decoding for speed. Translation quality is limited by this compact model and OCR quality. English is the current target language.
-- Pinyin appears before translation. Old translations never replace newer dialogue.
-- Every activation captures the full screen. The old overlay and Quick Access menu are hidden first, with a brief settling delay before capture to avoid reading our own text. There are no capture-region options. The game stays visible with 12% translucent dimming. Captured screenshots are used for recognition and never displayed over the game. Dark labels are anchored over the original text; overlapping rows keep their reading order and shift upward together when they reach the bottom. Narrow OCR boxes do not force narrow labels. If labels cannot fit without overlap, Previous/Next buttons show additional pages at their source positions. The overlay renders in a separate layer isolated from Steam/Decky container clipping and global styles. The labels describe a single capture; dismiss and recapture if the game text moves. Default Chinese text size is 14 px, the slider minimum; pinyin is about 9 px and English is 11 px. Compact padding and line spacing reduce card height.
-- Models remain loaded while enabled. Each request opens a short PipeWire capture, preferring a PNG snapshot with raw RGB fallback. Dismissed or superseded results cannot reappear. Requests are serialized; the overlay stays until dismissed or replaced.
-- Tap the **speaker icon** on a label to hear that line in Mandarin, or use **Speak captured Chinese** in the panel. **Read Chinese after capture** is on by default: recognized Chinese is read aloud once after each capture. Turn it off for button-only speech. The bundled Piper Huayan voice runs on CPU and plays through SteamOS audio. Capture, dismissal, Stop speech and unload stop playback.
-- Stop/unload terminates the worker and capture process group, freeing memory. Suspend stops the session; enable the shortcut after waking.
-- No screenshot history, text history, telemetry, remote fonts, or inference HTTP requests. The capture uses a private temporary PNG, deleted after decoding. Python inference refuses IP socket connections. Only settings are persisted; diagnostics go to Decky's plugin log.
+Release the key before capturing again. The panel also has **Capture Simplified**, **Capture Traditional** and **Dismiss overlay** buttons. Each capture reads the full screen; capture again when the game text changes.
 
-The plugin displays measured OCR, pinyin, and translation times. CPU inference defaults to two threads per engine, and manual requests run serially. Pinyin and translation still run on CPU. GPU OCR shares the integrated GPU and power budget with the game; use CPU mode to compare game performance. Actual frame rate, power, and battery effects need measuring on the Deck.
+- Dark labels appear near the original text, with a lightly dimmed game behind them. Crowded rows shift upward in reading order; **Previous/Next** shows more labels if they cannot fit.
+- Chinese defaults to **14 px**, pinyin to about **9 px**, and English to **11 px**. Adjust **Text size**, **Pinyin tones**, or **English translation** in the panel.
+- Mandarin speech plays automatically after capture. Turn off **Read Chinese after capture** for manual speech, then use a label's speaker icon or **Speak captured Chinese**. Dismissing the overlay stops speech.
+- Disable the shortcuts to unload the models. That preference is remembered. After suspend, enable the shortcuts again if needed.
 
-## Develop and build
+## Update
 
-Use Node.js 20+ and Python 3.11+:
+Open **Decky Pinyin → Updates → Check for updates**, then choose **Update to …** and confirm in Decky's dialog. Decky downloads the complete offline ZIP, verifies its checksum and reloads the plugin. Published prereleases are included.
 
-```sh
-python3.11 -m venv .venv
-.venv/bin/pip install --no-deps -r requirements.txt
-.venv/bin/pip install pytest==8.4.2 pytest-asyncio==1.2.0
-npm ci
-npm run typecheck
-npm run build
-.venv/bin/python scripts/prepare_models.py
-.venv/bin/python -m pytest -q
-.venv/bin/python scripts/benchmark.py --output artifacts/benchmark-host.json
-.venv/bin/python scripts/package.py
-```
+**Install 0.7.4 manually once to get these buttons.** Update checks and downloads need internet; capture, pinyin, translation and speech do not. Checks happen only when you press the button. If the installer is unavailable, update Decky or install the latest offline ZIP manually.
 
-`--no-deps` is intentional: requirements explicitly include transitive dependencies and headless OpenCV in place of RapidOCR's GUI dependency. The packaging script downloads only hash-pinned Linux x86_64/CPython 3.11 wheels, verifies the portable runtime and model archive, and includes per-file checksums. It runs on macOS or Linux; macOS binaries are never copied into the plugin.
+## Limits and performance
 
-Files:
+Horizontal Chinese text works best. Stylized fonts, vertical text, motion blur and tiny characters may be missed. Names, ambiguous pronunciations and translations can be inaccurate. English is the current translation target.
 
-- `src/`: Decky panel, global ruby-text overlay, event state.
-- `main.py`: Decky RPC and worker lifecycle; standard library only.
-- `backend/`: manual PipeWire capture, L4/L5 input, bounded pipeline, local model adapters and speech.
-- `scripts/`: build-time model preparation, offline packaging, real inference benchmark.
-- `tests/`: queue behavior, stale results, shutdown, configuration, and pronunciation checks.
-- `docs/STEAM_DECK_TEST.md`: physical-device acceptance procedure and outstanding checks.
+OCR tries the GPU by default and falls back to CPU if unavailable. Pinyin, translation and speech use CPU. The panel displays inference times and offers processor/thread settings; GPU OCR shares resources with the game. Game FPS and battery impact have not been measured.
 
-Additional checks:
+The plugin saves settings, but no screenshot or text history. It uses no cloud inference or telemetry. For device checks and troubleshooting, see [Steam Deck testing](docs/STEAM_DECK_TEST.md).
 
-```sh
-npx playwright install chromium
-node scripts/verify_overlay.mjs
-docker build --platform linux/amd64 -f tests/Dockerfile.capture -t decky-pinyin-capture-test .
-docker run --rm --platform linux/amd64 --network none \
-  -v "$PWD:/work:ro" -w /work -e PYTHONPATH=/work/build/decky-pinyin/vendor \
-  decky-pinyin-capture-test /work/build/decky-pinyin/runtime/bin/python3 scripts/verify_capture.py
-```
+## Development and licenses
 
-The capture integration uses a real PipeWire server with a synthetic 1280×800, 30 FPS source. It checks repeated PNG snapshots and raw RGB fallback. It does not emulate Gamescope or Steam UI composition. The browser check similarly stubs Steam's composition hook. If you already have a compatible Chromium binary, set `CHROMIUM_PATH` for the overlay check.
+Build, architecture, testing and release notes are in [AGENTS.md](AGENTS.md). Recorded test results are in [verification notes](docs/VERIFICATION.md).
 
-On a Deck, the bundled diagnostic can measure actual model speed without network access:
-
-```sh
-cd ~/homebrew/plugins/decky-pinyin
-PYTHONPATH="$PWD/vendor" runtime/bin/python3 scripts/benchmark.py --ocr-device auto
-```
-
-Compare `--ocr-device cpu` with `--ocr-device gpu`; the latter fails explicitly if GPU initialization is unavailable. Disable the shortcut first. This diagnostic measures the included two-line fixture and excludes screen capture and display latency. See `docs/VERIFICATION.md` for evidence and remaining checks.
-
-The Steam composition hook is an internal API and may change with Steam updates. If it cannot be found, the panel disables activation and reports the problem. See `THIRD_PARTY.md` and `LICENSE` for attribution and redistribution details.
+Source is GPL-3.0-only. Bundled components have their own terms; see [third-party notices](THIRD_PARTY.md) and [LICENSE](LICENSE). The bundled Huayan voice's upstream model card lists its dataset license as **Unknown**.

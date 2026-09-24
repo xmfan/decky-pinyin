@@ -95,3 +95,13 @@ The user confirmed the 0.7.2 overlay is visible. Their clipboard photo showed la
 Default/minimum Chinese size is 14 px, pinyin is 0.64× (8.96 px), and English is 11 px. Card padding, token spacing, line heights and row gaps are smaller. Short cards can be 240 px wide; longer cards retain up to 680 px. A monochrome 14 px speaker icon replaces the emoji. Automatic speech remains enabled.
 
 Regression checks cover uniform and variable-height bottom rows, ordered pagination for oversized groups, and rendered compact four-row dialogue. Existing browser checks cover bounds, syllable collisions, hostile host CSS, separate loader/game documents, resizing, controls and speech dispatch. artifacts/overlay-bottom-dialogue.png records the synthetic dialogue fixture; the user's clipboard photo is not included. Physical Deck readability and this new layout need user confirmation.
+
+## In-plugin updates and documentation (0.7.4)
+
+The Updates section checks the public GitHub releases endpoint only on a button press. It includes numbered prereleases, compares numeric versions, rejects downgrades, and requires the exact offline ZIP URL and matching SHA-256 sidecar. Requests use Decky's fetch proxy, with a 20-second timeout per request. No credentials or additional backend network access are added.
+
+The Update button calls Decky's native `utilities/install_plugin` route with the offline ZIP URL, display name, version, checksum and UPDATE install type. Decky owns confirmation, downloading, hash verification and reload; the plugin reports only that the prompt was opened. Cancellation does not stop inference. Missing installer APIs and network errors allow retry. This route is confirmed in upstream `frontend/src/plugin.ts` and `backend/decky_loader/utilities.py`; it is internal and may change.
+
+Browser tests cover no automatic network requests, 0.7.10 vs 0.7.9 numeric ordering, draft exclusion, prerelease inclusion, current/older releases, missing assets, foreign URLs, malformed checksums, offline/rate-limit/timeout failures, unavailable/failed installers, and the exact native installer payload. Existing overlay/input/speech checks pass. TypeScript and production build pass. An anonymous live check using a simulated installed 0.7.2 found public 0.7.3 and its exact published SHA-256 sidecar. Actual Decky download, replacement and reload still require a physical Deck.
+
+README now focuses on installation, use, updates and current user-facing limits. Build, architecture, testing and release guidance moved into AGENTS.md. The README identifies the plugin as functional but under active development, with UX work remaining, and explains why the repository is public.

@@ -12,3 +12,5 @@ export const ButtonItem = ({children,onClick,disabled}: any) => h("button", {onC
 export const ToggleField = ({label,checked,onChange,disabled}: any) => h("label", {}, label, h("input", {type:"checkbox",checked,disabled,onChange:(e:any)=>onChange(e.target.checked)}));
 export const DropdownItem = ({label,selectedOption,rgOptions,onChange,disabled}: any) => h("label", {}, label, h("select", {value:selectedOption,disabled,onChange:(e:any)=>onChange(rgOptions.find((o:any)=>String(o.data)===e.target.value))}, rgOptions.map((o:any)=>h("option",{key:o.data,value:o.data},o.label))));
 export const SliderField = ({label,value,min,max,step,onChange}: any) => h("label", {}, label,h("input",{type:"range",value,min,max,step,onChange:(e:any)=>onChange(Number(e.target.value))}));
+
+export const fetchNoCors = (url: string, init?: RequestInit) => (window as any).testFetch(url, init);
