@@ -14,13 +14,11 @@ export const rpc = {
 
 export class Store {
   state: State | null = null;
-  received = 0;
   private listeners = new Set<() => void>();
   update = (state: State) => {
     // A slow RPC reply must not roll back a newer streamed event.
     if (this.state && state.version < this.state.version) return;
     this.state = state;
-    this.received = Date.now();
     this.listeners.forEach((fn) => fn());
   };
   subscribe = (fn: () => void) => {

@@ -6,14 +6,14 @@ A personal Decky plugin for **Chinese text → tone-marked pinyin + English on d
 
 ## Install
 
-1. Copy `out/Decky-Pinyin-0.5.0-offline.zip` to your Steam Deck.
+1. Copy `out/Decky-Pinyin-0.5.1-offline.zip` to your Steam Deck.
 2. In Decky settings, enable Developer Mode. Open Developer → Install Plugin from ZIP and select the file.
 3. Launch a game in Gaming Mode and open **Decky Pinyin**.
 4. Disable the original Decky Translator shortcut if it also uses L4. Press **Enable L4 shortcut**; allow the local models to load.
 5. Close the menu and **hold L4 for 1 second** to capture. **Hold L4 for 0.5 seconds** to dismiss, then hold it again for the next capture. A progress indicator shows activation.
 6. The panel also has **Capture now** and **Dismiss overlay** buttons. Disable the shortcut to unload the models. Settings changes disable it; enable it again afterward.
 
-Download the actual `Decky-Pinyin-0.5.0-offline.zip` release asset. If downloading the Actions artifact named `decky-pinyin-offline.zip`, extract that wrapper once and install the inner versioned offline ZIP.
+Download the actual `Decky-Pinyin-0.5.1-offline.zip` release asset. If downloading the Actions artifact named `decky-pinyin-offline.zip`, extract that wrapper once and install the inner versioned offline ZIP.
 
 The ZIP includes Python, dependencies, OCR weights, the neural pinyin model, and the translation model. **No model setup, API keys, network connection, or system Python changes are needed on the Deck.** Building the ZIP on a developer machine requires downloads once. Existing Decky Loader and SteamOS PipeWire/GStreamer components are required. Desktop Mode is not currently supported.
 

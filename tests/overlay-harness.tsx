@@ -9,9 +9,9 @@ const pinyin = "nǐ hǎo _ huān yíng lái dào zhè lǐ _ qǐng dǎ kāi dì t
 const state: State = {
   version: 1,
   status: "running", message: "Local", installed: true,
-  settings: { interval_ms: 500, translation: true, tone_style: "marks", font_size: 22, confidence: .65, threads: 2, ocr_device: "auto" },
+  settings: { translation: true, tone_style: "marks", font_size: 22, confidence: .65, threads: 2, ocr_device: "auto" },
   result: { revision: 1, lines: [{ text, confidence: .98, tokens: [...text].map((char, i) => ({ text: char, pinyin: pinyin[i] === "_" ? "" : pinyin[i] })) }],
-    translation: "Hello, welcome here. Open the map and find a nearby village.", translating: false, ocr_ms: 122, pinyin_ms: 2, translation_ms: 54, age_ms: 180, skipped: 4, ocr_device: "cpu", ocr_notice: "" },
+    translation: "Hello, welcome here. Open the map and find a nearby village.", translating: false, ocr_ms: 122, pinyin_ms: 2, translation_ms: 54, age_ms: 180, ocr_device: "cpu", ocr_notice: "" },
 };
 const store = new Store();
 store.update(state);

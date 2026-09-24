@@ -53,9 +53,9 @@ class ManualSession:
                 await current_emit({"type": "screenshot", "image": "data:image/jpeg;base64," + base64.b64encode(encoded.getvalue()).decode("ascii")})
                 await current_emit({"type": "status", "status": "running", "busy": True, "message": "Recognizing Chinese locally…"})
                 pipeline = Pipeline(self.settings, self.ocr, self.pinyin, self.translator, current_emit)
-                await pipeline.process(frame)
-                if request == self.request_id and not pipeline.pending.empty():
-                    await pipeline.translate_item(*pipeline.pending.get_nowait())
+                text = await pipeline.process(frame)
+                if request == self.request_id and text:
+                    await pipeline.translate(text)
                 message = "Hold L4 to dismiss, then hold again to capture" if pipeline.current["lines"] else "No Chinese text found. Hold L4 to dismiss and try again."
                 await current_emit({"type": "status", "status": "running", "busy": False, "message": message})
             except Exception as exc:

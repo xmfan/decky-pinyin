@@ -1,5 +1,4 @@
 export interface Settings {
-  interval_ms: number;
   translation: boolean;
   tone_style: "marks" | "numbers" | "none";
   font_size: number;
@@ -18,7 +17,6 @@ export interface Result {
   pinyin_ms: number;
   translation_ms: number;
   age_ms: number;
-  skipped: number;
   ocr_device: "cpu" | "gpu";
   ocr_notice: string;
 }

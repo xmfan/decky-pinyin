@@ -4,7 +4,6 @@ import math
 
 @dataclass(frozen=True)
 class Settings:
-    interval_ms: int = 500
     translation: bool = True
     tone_style: str = "marks"
     font_size: int = 22
@@ -20,7 +19,7 @@ class Settings:
         if set(raw) - set(values):
             raise ValueError("Unknown setting")
         values.update(raw)
-        for name, lo, hi in (("interval_ms", 250, 2000), ("font_size", 16, 32), ("threads", 1, 4)):
+        for name, lo, hi in (("font_size", 16, 32), ("threads", 1, 4)):
             value = values[name]
             if type(value) is not int or not lo <= value <= hi:
                 raise ValueError(f"{name} must be an integer from {lo} to {hi}")

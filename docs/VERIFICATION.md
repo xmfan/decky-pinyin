@@ -51,3 +51,7 @@ Removed all percentage-based capture settings and cropping. Manual OCR now recei
 The user reported that both L4 and Capture now did nothing in 0.4.0 and requested the original plugin's flow with our local models. This update copies the upstream HID monitor, frontend button polling/hold handling, activation indicator, and PipeWire PNG/RGB methods. The overlay acknowledgment gate and previous forced capture node/caps are removed. A screenshot is displayed before inference, followed by our existing pinyin and English output. See `UPSTREAM_PORT.md` for pinned provenance and adaptations.
 
 34 Python tests passed, including original controller initialization/report decoding, snapshot retry/native RGB, child-process cancellation, direct worker command dispatch and full-frame OCR. TypeScript/build and browser tests passed: one-second hold capture, half-second hold dismiss, snapshot display before OCR, direct panel capture, cancellation and polling recovery. Hardware remains unverified.
+
+## Cleanup (0.5.1)
+
+Removed unused continuous-inference machinery: sampling interval, change detector, live stream loop, background translation queue, skipped-frame counters and stale frontend timestamp. ManualSession alone owns request serialization and dismissal; Pipeline now handles one screenshot's OCR/pinyin followed by optional translation. Obsolete streaming tests were replaced with manual inference checks. 32 Python tests, TypeScript/build and the browser interaction check passed locally. Capture/input behavior and local models are unchanged from 0.5.0.

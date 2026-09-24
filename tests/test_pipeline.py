@@ -1,13 +1,12 @@
 import asyncio
 import copy
-import threading
 import time
 
 import numpy as np
 import pytest
 
 from backend.config import Settings
-from backend.pipeline import ChangeDetector, Frame, Pipeline
+from backend.pipeline import Frame, Pipeline
 
 
 class Ocr:
@@ -29,58 +28,33 @@ def frame(value=0):
 
 
 @pytest.mark.asyncio
-async def test_unchanged_frame_skips_ocr_and_blank_clears_overlay():
+async def test_each_manual_capture_runs_ocr_and_blank_clears_text():
     ocr, events = Ocr(), []
     async def emit(event):
         events.append(copy.deepcopy(event))
     pipeline = Pipeline(Settings(), ocr, Pinyin(), None, emit)
     await pipeline.process(frame())
     await pipeline.process(frame())
-    assert ocr.calls == 1
-    assert pipeline.skipped == 1
+    assert ocr.calls == 2
     ocr.text = ""
-    await pipeline.process(frame(255))
-    assert events[-1]["lines"] == []
-    assert events[-1]["translation"] == ""
+    assert await pipeline.process(frame()) is None
+    assert events[-1]["lines"] == [] and events[-1]["translation"] == ""
 
 
 @pytest.mark.asyncio
-async def test_pinyin_is_immediate_and_old_translation_never_overwrites_new_dialogue():
-    started, release = threading.Event(), threading.Event()
+async def test_pinyin_is_published_before_translation():
+    events = []
     class Translator:
-        calls = []
         def translate(self, text):
-            self.calls.append(text)
-            if len(self.calls) == 1:
-                started.set()
-                release.wait(3)
-            return f"translated {text}"
-    translator, ocr, events = Translator(), Ocr(), []
+            assert events[-1]["lines"] and events[-1]["translating"]
+            return "Hello"
     async def emit(event):
         events.append(copy.deepcopy(event))
-    pipeline = Pipeline(Settings(), ocr, Pinyin(), translator, emit)
-    task = asyncio.create_task(pipeline._translate())
-    try:
-        await pipeline.process(frame())
-        assert events[-1]["translating"] and events[-1]["lines"]
-        assert await asyncio.to_thread(started.wait, 2)
-        ocr.text = "第二句"
-        await pipeline.process(frame(100))
-        ocr.text = "第三句"
-        await pipeline.process(frame(255))
-        assert pipeline.pending.qsize() == 1
-        release.set()
-        for _ in range(100):
-            if events[-1]["translation"]:
-                break
-            await asyncio.sleep(0.01)
-        assert translator.calls == ["你好", "第三句"]
-        assert events[-1]["translation"] == "translated 第三句"
-        assert all(e["translation"] != "translated 你好" for e in events)
-    finally:
-        release.set()
-        task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+    pipeline = Pipeline(Settings(), Ocr(), Pinyin(), Translator(), emit)
+    text = await pipeline.process(frame())
+    assert text == "你好" and events[-1]["translation"] == ""
+    await pipeline.translate(text)
+    assert events[-1]["translation"] == "Hello" and not events[-1]["translating"]
 
 
 @pytest.mark.asyncio
@@ -92,34 +66,10 @@ async def test_translation_error_keeps_pinyin():
     async def emit(event):
         events.append(copy.deepcopy(event))
     pipeline = Pipeline(Settings(), Ocr(), Pinyin(), Translator(), emit)
-    task = asyncio.create_task(pipeline._translate())
-    try:
-        await pipeline.process(frame())
-        for _ in range(100):
-            if "translation_error" in events[-1]:
-                break
-            await asyncio.sleep(0.01)
-        assert events[-1]["translation_error"] == "test model failure"
-        assert events[-1]["lines"]
-    finally:
-        task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
-
-
-def test_change_detector_periodically_checks_small_changes():
-    detector = ChangeDetector()
-    image = frame().rgb
-    assert detector.changed(image, 1)
-    assert not detector.changed(image, 1.5)
-    assert detector.changed(image, 3.1)
-
-
-def test_change_detector_notices_local_character_sized_edit():
-    detector = ChangeDetector()
-    image = np.zeros((320, 1280, 3), dtype=np.uint8)
-    detector.changed(image, 1)
-    image[240:260, 600:610] = 255
-    assert detector.changed(image, 1.5)
+    text = await pipeline.process(frame())
+    await pipeline.translate(text)
+    assert events[-1]["translation_error"] == "test model failure"
+    assert events[-1]["lines"]
 
 
 @pytest.mark.asyncio
