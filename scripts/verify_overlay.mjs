@@ -175,8 +175,35 @@ try {
   assert.equal((await page.evaluate(() => window.preview.captures()))[1].script, "simplified");
   assert.equal(await page.getByLabel("Read Chinese after capture").count(), 1);
   assert.equal(await page.getByLabel("Text size").count(), 1);
+  // Steam may render components in a different window than the module loader.
+  await page.setViewportSize({width:320,height:240});
+  const popup = page.waitForEvent("popup");
+  await page.goto(pathToFileURL(path.join(root, ".cache/overlay-preview.html")).href + "?other-window");
+  const game = await popup;
+  game.on("pageerror", error => errors.push(String(error)));
+  await game.setViewportSize({width:1280,height:800});
+  await game.locator("[data-reading-label]").first().waitFor();
+  assert.equal(await game.locator("[data-reading-label]").count(), 2, "Labels must render in the game UI's document");
+  assert.equal(await page.locator("[data-pinyin-overlay-host]").count(), 0, "No overlay may be attached to the loader document");
+  const surface = await game.locator("[data-reading-surface]").boundingBox();
+  assert.equal(surface.width,1280);assert.equal(surface.height,800);
+  const first = await game.locator("[data-reading-label]").first().boundingBox();
+  assert(Math.abs(first.x-162)<1 && Math.abs(first.y-641)<1, "Coordinates must use the 1280×800 game surface, not the 320×240 loader");
+  await game.screenshot({path:path.join(root,"artifacts/overlay-other-window.png")});
+  await page.setViewportSize({width:640,height:480});
+  await game.waitForTimeout(100);
+  const unaffected=await game.locator("[data-reading-label]").first().boundingBox();
+  assert.deepEqual(unaffected,first,"Resizing the loader window must not move game labels");
+  await game.setViewportSize({width:1920,height:1080});
+  await game.waitForTimeout(100);
+  const docked=await game.locator("[data-reading-label]").first().boundingBox();
+  assert(Math.abs(docked.x-(96+162*1.35))<1 && Math.abs(docked.y-641*1.35)<1,"Game-window resize must update capture scaling and letterboxing");
+  await page.evaluate(()=>window.preview.stop());
+  await game.waitForTimeout(100);
+  assert.equal(await game.locator("[data-pinyin-overlay-host]").count(),0,"Stopping must remove the host from its owner document");
+  await game.close();
   assert.deepEqual(errors, []);
-  console.log("Overlay verified at 1280×800: ruby alignment, text fit, L4/L5 script holds, default activation, source-anchored wide labels, non-overlapping pages, host CSS/clipping isolation, translucent background, direct capture, dismiss cancellation, polling recovery. Steam composition hook is stubbed; physical Deck still required.");
+  console.log("Overlay verified at 1280×800: ruby alignment, text fit, L4/L5 script holds, default activation, source-anchored wide labels, non-overlapping pages, host CSS/clipping isolation, separate loader/game windows and viewport scaling, translucent background, direct capture, dismiss cancellation, polling recovery. Steam composition hook is stubbed; physical Deck still required.");
 } finally {
   await browser.close();
 }

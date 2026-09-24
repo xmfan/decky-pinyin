@@ -1,5 +1,5 @@
 import { findModuleChild, useQuickAccessVisible } from "@decky/ui";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { paginateLabels } from "./layout";
 import { OverlayPortal } from "./OverlayPortal";
 import type { LabelPage } from "./layout";
@@ -36,14 +36,23 @@ export function Overlay({ store }: { store: Store }) {
 function ReadingSurface({ store }: { store: Store }) {
   const state = useStateSnapshot(store)!;
   const result = state.result;
-  const [viewport, setViewport] = useState({ width: window.innerWidth, height: window.innerHeight });
+  const surface = useRef<HTMLDivElement>(null);
+  const [viewport, setViewport] = useState({ width: 1280, height: 800 });
   const [pages, setPages] = useState<LabelPage[]>([]);
   const [pageIndex, setPageIndex] = useState(0);
   const labels = useRef<(HTMLDivElement | null)[]>([]);
-  useEffect(() => {
-    const resize = () => setViewport({ width: window.innerWidth, height: window.innerHeight });
-    window.addEventListener("resize", resize);
-    return () => window.removeEventListener("resize", resize);
+  useLayoutEffect(() => {
+    const element = surface.current!;
+    const view = element.ownerDocument.defaultView!;
+    const resize = () => {
+      const width = element.clientWidth, height = element.clientHeight;
+      if (width > 0 && height > 0) setViewport(previous => previous.width === width && previous.height === height ? previous : { width, height });
+    };
+    resize();
+    const observer = new ResizeObserver(resize);
+    observer.observe(element);
+    view.addEventListener("resize", resize);
+    return () => { observer.disconnect(); view.removeEventListener("resize", resize); };
   }, []);
   const sourceWidth = result?.width || 1280;
   const sourceHeight = result?.height || 800;
@@ -73,7 +82,7 @@ function ReadingSurface({ store }: { store: Store }) {
   }, [result, width, height, state?.settings.font_size, state?.settings.translation]);
   const speak = (line: number) => { void rpc.speak(line).then(store.update).catch(console.error); };
   const speaking = state.speech_status === "generating" || state.speech_status === "speaking";
-  return <>
+  return <div ref={surface} data-reading-surface style={{ position: "fixed", inset: 0, width: "100vw", height: "100vh", pointerEvents: "none" }}>
     <div data-game-dimmer style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.12)", zIndex: 7999, pointerEvents: "none" }} />
     <div data-screenshot-plane style={{ position: "fixed", left: (viewport.width - width) / 2,
       top: (viewport.height - height) / 2, width, height, zIndex: 8000, pointerEvents: "none" }}>
@@ -115,5 +124,5 @@ function ReadingSurface({ store }: { store: Store }) {
       {speaking && <button onClick={() => void rpc.stopSpeech().then(store.update)} style={{ marginLeft: 8 }}>Stop speech</button>}
       {state.speech_error && <span> · Speech: {state.speech_error}</span>}
     </div>
-  </>;
+  </div>;
 }

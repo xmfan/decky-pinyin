@@ -24,7 +24,7 @@ export default definePlugin(() => {
   const suspend = steam?.User?.RegisterForPrepareForSystemSuspendProgress?.(() => { void rpc.pause().then(store.update).catch(console.error); });
   return {
     name: "Decky Pinyin",
-    titleView: <div className={staticClasses.Title}>Decky Pinyin · 0.7.1</div>,
+    titleView: <div className={staticClasses.Title}>Decky Pinyin · 0.7.2</div>,
     content: <Panel store={store} controller={controller} />,
     icon: <BsTranslate />,
     alwaysRender: true,

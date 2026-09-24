@@ -69,4 +69,13 @@ Object.assign((window as any).preview, {
   autoSpeech: () => { backendState = { ...backendState, version: backendState.version + 1, settings: { ...backendState.settings, tts_auto: true } }; },
 });
 const panelController = { capture: async (script: string) => (window as any).testRpc("capture", script), dismiss: async () => (window as any).testRpc("dismiss") } as unknown as Controller;
-createRoot(document.getElementById("root")!).render(location.search.includes("panel") ? <Panel store={store} controller={panelController} /> : <Overlay store={store} />);
+const target = location.search.includes("other-window") ? window.open("about:blank", "pinyin-game-ui", "width=1280,height=800")! : window;
+if (target !== window) {
+  target.document.body.style.cssText = "margin:0;background:#141b26";
+  target.document.body.innerHTML = '<div id="root"></div>';
+  const image = target.document.createElement("img");
+  image.src = new URL("../artifacts/ocr-fixture.png", location.href).href;
+  image.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;pointer-events:none;z-index:-1";
+  target.document.body.prepend(image);
+}
+createRoot(target.document.getElementById("root")!).render(location.search.includes("panel") ? <Panel store={store} controller={panelController} /> : <Overlay store={store} />);

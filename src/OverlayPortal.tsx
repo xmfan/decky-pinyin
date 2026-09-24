@@ -1,12 +1,16 @@
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 // Keep Steam/Decky ancestor clipping, transforms and global CSS out of the
 // reading surface. The host is removed on dismiss, suspend and plugin unload.
 export function OverlayPortal({ children }: { children: ReactNode }) {
+  const anchor = useRef<HTMLSpanElement>(null);
   const [root, setRoot] = useState<ShadowRoot | null>(null);
   useLayoutEffect(() => {
+    // Decky can render this component into another Steam window. Module-global
+    // document/window still refer to the loader window in that case.
+    const document = anchor.current!.ownerDocument;
     const host = document.createElement("div");
     host.dataset.pinyinOverlayHost = "";
     const styles = { all: "initial", position: "fixed", inset: "0", display: "block", width: "100vw", height: "100vh",
@@ -23,5 +27,5 @@ export function OverlayPortal({ children }: { children: ReactNode }) {
     setRoot(shadow);
     return () => { host.remove(); };
   }, []);
-  return root ? createPortal(children, root) : null;
+  return <><span ref={anchor} data-pinyin-overlay-anchor style={{ display: "none" }} />{root ? createPortal(children, root) : null}</>;
 }

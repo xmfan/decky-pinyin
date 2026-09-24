@@ -2,18 +2,18 @@
 
 A personal Decky plugin for **Chinese text → tone-marked pinyin + English on demand**, entirely on the Steam Deck. Inspired by [Decky-Translator](https://github.com/cat-in-a-box/Decky-Translator).
 
-**Status:** the user confirmed that 0.5.1 capture and overlay work on their Steam Deck. The user confirmed speech and pinyin in 0.6.x, but reported a dark screen and narrow/hidden labels. The user then reported invisible labels with working speech in 0.7.0. Version 0.7.1 isolates the reading surface from host layout/styles and replaces the scrolling fallback with pages; these changes still need device testing. Deck latency and game performance have not been measured.
+**Status:** the user confirmed that 0.5.1 capture and overlay work on their Steam Deck. The user confirmed speech and pinyin in 0.6.x, but reported a dark screen and narrow/hidden labels. The user then reported invisible labels with working speech in 0.7.0. Version 0.7.1 then made the entire overlay invisible. A two-window browser test reproduced labels being attached to the loader window instead of the game UI. Version 0.7.2 selects the rendered component’s owner document and measures its actual overlay surface. The new regression checks pass; device confirmation is still needed. Deck latency and game performance have not been measured.
 
 ## Install
 
-1. Copy `out/Decky-Pinyin-0.7.1-offline.zip` to your Steam Deck.
+1. Copy `out/Decky-Pinyin-0.7.2-offline.zip` to your Steam Deck.
 2. In Decky settings, enable Developer Mode. Open Developer → Install Plugin from ZIP and select the file.
 3. Launch a game in Gaming Mode and open **Decky Pinyin**.
 4. The **L4 / L5 shortcuts are enabled by default**; allow the local models to load. Disable other plugins using these keys.
 5. Close the menu and hold **L4 for Simplified Chinese** or **L5 for Traditional Chinese**, for **0.2 seconds**. With labels visible, hold either key to dismiss; release and hold the desired key for the next capture. A progress indicator shows activation.
 6. The panel also has **Capture Simplified**, **Capture Traditional** and **Dismiss overlay** buttons. Disable the shortcut to unload the models. Settings changes restart models when enabled. Disabling the shortcut is remembered across reloads.
 
-Download the actual `Decky-Pinyin-0.7.1-offline.zip` release asset. If downloading the Actions artifact named `decky-pinyin-offline.zip`, extract that wrapper once and install the inner versioned offline ZIP.
+Download the actual `Decky-Pinyin-0.7.2-offline.zip` release asset. If downloading the Actions artifact named `decky-pinyin-offline.zip`, extract that wrapper once and install the inner versioned offline ZIP.
 
 The ZIP includes Python, dependencies, OCR weights, the neural pinyin model, the translation model, and an offline Mandarin voice. **No model setup, API keys, network connection, or system Python changes are needed on the Deck.** Building the ZIP on a developer machine requires downloads once. Existing Decky Loader and SteamOS PipeWire/GStreamer components are required. Desktop Mode is not currently supported.
 
