@@ -3,48 +3,46 @@ export interface LabelSize { width: number; height: number; }
 export interface Placement { left: number; top: number; width: number; height: number; }
 
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(value, Math.max(low, high)));
-const overlap = (a: Placement, b: Placement) => Math.max(0, Math.min(a.left + a.width, b.left + b.width) - Math.max(a.left, b.left)) *
-  Math.max(0, Math.min(a.top + a.height, b.top + b.height) - Math.max(a.top, b.top));
-export const labelsOverlap = (boxes: Placement[]) => boxes.some((box, index) => boxes.slice(index + 1).some(other => overlap(box, other) > 0));
+const gap = 4;
+const sameColumn = (a: Placement, b: Placement) => a.left < b.left + b.width + gap && b.left < a.left + a.width + gap;
+export const labelsOverlap = (boxes: Placement[]) => boxes.some((a, index) => boxes.slice(index + 1).some(b =>
+  a.left < b.left + b.width && b.left < a.left + a.width && a.top < b.top + b.height && b.top < a.top + a.height));
+const layoutFits = (boxes: Placement[], width: number, height: number) => !labelsOverlap(boxes) && boxes.every(box =>
+  box.left >= 4 && box.top >= 32 && box.left + box.width <= width - 4 && box.top + box.height <= height - 4);
 
-// Anchor over the original text. Search neighboring free edges only when a
-// label would collide. If no layout fits, paginateLabels starts another page.
+// Keep OCR reading order within each overlapping column. Push later rows down,
+// then move the group upward if its last row reaches the bottom of the screen.
+// An over-tall group stays out of bounds so pagination can split it safely.
 export function placeLabels(rects: Rect[], sizes: LabelSize[], width: number, height: number): Placement[] {
-  const placed: Placement[] = [];
-  rects.forEach((rect, index) => {
-    const size = sizes[index];
-    const anchorX = clamp(rect.left * width, 4, width - size.width - 4);
-    const anchorY = clamp(rect.top * height, 32, height - size.height - 4);
-    const xs = [anchorX, 4, width - size.width - 4];
-    const ys = [anchorY, 32, height - size.height - 4];
-    for (const other of placed) {
-      xs.push(other.left - size.width - 6, other.left + other.width + 6);
-      ys.push(other.top - size.height - 6, other.top + other.height + 6);
+  const placed = rects.map((rect, index) => ({
+    left: clamp(rect.left * width, 4, width - sizes[index].width - 4),
+    top: clamp(rect.top * height, 32, height - sizes[index].height - 4),
+    ...sizes[index],
+  }));
+  for (let i = 0; i < placed.length; i++) {
+    for (let j = 0; j < i; j++) if (sameColumn(placed[i], placed[j])) {
+      placed[i].top = Math.max(placed[i].top, placed[j].top + placed[j].height + gap);
     }
-    const candidates = xs.flatMap(left => ys.map(top => {
-      const box = { left: clamp(left, 4, width - size.width - 4), top: clamp(top, 32, height - size.height - 4), ...size };
-      const collision = placed.reduce((sum, other) => sum + overlap(box, {
-        left: other.left - 3, top: other.top - 3, width: other.width + 6, height: other.height + 6,
-      }), 0);
-      return { box, collision, distance: Math.abs(box.left - anchorX) + Math.abs(box.top - anchorY) };
-    }));
-    candidates.sort((a, b) => a.collision - b.collision || a.distance - b.distance);
-    placed.push(candidates[0].box);
-  });
+  }
+  for (let i = placed.length - 1; i >= 0; i--) {
+    placed[i].top = Math.min(placed[i].top, height - placed[i].height - 4);
+    for (let j = i + 1; j < placed.length; j++) if (sameColumn(placed[i], placed[j])) {
+      placed[i].top = Math.min(placed[i].top, placed[j].top - placed[i].height - gap);
+    }
+  }
   return placed;
 }
 
 export interface LabelPage { indices: number[]; positions: Placement[]; }
 
-// Keep every label at a source-based position. Dense captures are split into
-// pages instead of moving all text into a clipped or scroll-dependent list.
+// Split sequential rows only when the whole group cannot fit on screen.
 export function paginateLabels(rects: Rect[], sizes: LabelSize[], width: number, height: number): LabelPage[] {
   const pages: LabelPage[] = [];
   let current: LabelPage = { indices: [], positions: [] };
   rects.forEach((_, index) => {
     const indices = [...current.indices, index];
     const positions = placeLabels(indices.map(i => rects[i]), indices.map(i => sizes[i]), width, height);
-    if (current.indices.length && labelsOverlap(positions)) {
+    if (current.indices.length && !layoutFits(positions, width, height)) {
       pages.push(current);
       current = { indices: [index], positions: placeLabels([rects[index]], [sizes[index]], width, height) };
     } else current = { indices, positions };

@@ -15,6 +15,21 @@ await build({
   } }],
 });
 await writeFile(path.join(root, ".cache/overlay-preview.html"), `<!doctype html><html><head><meta charset="utf-8"><title>Decky Pinyin overlay test</title></head><body style="margin:0;background:#141b26"><img src="../artifacts/ocr-fixture.png" style="position:fixed;width:100vw;height:100vh;object-fit:fill;pointer-events:none;z-index:-1"/><div id="root"></div><script src="./overlay-preview.js"></script></body></html>`);
+await build({entryPoints:[path.join(root,"src/layout.ts")],bundle:true,platform:"node",format:"esm",outfile:path.join(root,".cache/layout-test.mjs")});
+const {paginateLabels, labelsOverlap} = await import(pathToFileURL(path.join(root,".cache/layout-test.mjs")));
+const rects = [.72,.78,.84,.90].map(top=>({left:.32,right:.84,top,bottom:top+.04}));
+for (const heights of [[80,80,80,80],[45,120,65,90],[400,400,400,400]]) {
+  const pages = paginateLabels(rects, heights.map(height=>({width:680,height})),1280,800);
+  assert.deepEqual(pages.flatMap(p=>p.indices),[0,1,2,3]);
+  assert.equal(pages.length,heights[0]===400 ? 4 : 1);
+  for (const {positions} of pages) {
+    assert(!labelsOverlap(positions));
+    positions.forEach((box,i)=>{
+      assert(box.top>=32 && box.top+box.height<=796);
+      if(i) assert(box.top>=positions[i-1].top+positions[i-1].height+4);
+    });
+  }
+}
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH });
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
@@ -73,7 +88,23 @@ try {
   await page.evaluate(() => window.preview.narrow());
   await page.waitForTimeout(100);
   const narrow = await page.locator("[data-reading-label]").boundingBox();
-  assert(narrow.width >= 360 && narrow.height < 140, "Narrow OCR boxes must not make vertical labels");
+  assert(narrow.width >= 240 && narrow.height < 140, "Narrow OCR boxes must not make vertical labels");
+  await page.evaluate(() => window.preview.bottomDialogue());
+  await page.waitForTimeout(100);
+  const dialogue = await checkBounds();
+  assert.equal(dialogue.length, 4, "Compact dialogue should fit on a single page");
+  for (let i=1;i<dialogue.length;i++) assert(dialogue[i].top >= dialogue[i-1].bottom + 3, "Later dialogue must stay below earlier rows");
+  assert(dialogue[0].top < .82 * 800, "Bottom overflow must move the group upward");
+  assert.equal(await page.locator("[data-label-pages]").count(), 0);
+  const fonts = await page.locator("[data-reading-label]").first().evaluate(el => ({
+    chinese: getComputedStyle(el.querySelector("ruby")).fontSize,
+    pinyin: getComputedStyle(el.querySelector("rt")).fontSize,
+    english: getComputedStyle(el.lastElementChild).fontSize,
+    emoji: el.textContent.includes("🔊"),
+  }));
+  assert.equal(fonts.chinese, "14px");assert.equal(fonts.english, "11px");
+  assert(parseFloat(fonts.pinyin) < 10);assert.equal(fonts.emoji, false);
+  await page.screenshot({path:path.join(root,"artifacts/overlay-bottom-dialogue.png")});
   await page.evaluate(() => window.preview.crowded());
   await page.waitForTimeout(100);
   assert.equal(await page.locator("[data-reading-list]").count(), 0, "The scrolling fallback must be removed");
@@ -203,7 +234,7 @@ try {
   assert.equal(await game.locator("[data-pinyin-overlay-host]").count(),0,"Stopping must remove the host from its owner document");
   await game.close();
   assert.deepEqual(errors, []);
-  console.log("Overlay verified at 1280×800: ruby alignment, text fit, L4/L5 script holds, default activation, source-anchored wide labels, non-overlapping pages, host CSS/clipping isolation, separate loader/game windows and viewport scaling, translucent background, direct capture, dismiss cancellation, polling recovery. Steam composition hook is stubbed; physical Deck still required.");
+  console.log("Overlay verified at 1280×800: ruby alignment, text fit, L4/L5 script holds, default activation, source-anchored wide labels, non-overlapping pages, compact text and ordered bottom dialogue, host CSS/clipping isolation, separate loader/game windows and viewport scaling, translucent background, direct capture, dismiss cancellation, polling recovery. Steam composition hook is stubbed; physical Deck still required.");
 } finally {
   await browser.close();
 }

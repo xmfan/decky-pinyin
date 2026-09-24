@@ -9,7 +9,7 @@ import fixture from "../artifacts/overlay-fixture.json";
 const state: State = {
   version: 1,
   status: "running", message: "Local", installed: true, screenshot: "../artifacts/ocr-fixture.png",
-  settings: { enabled: true, chinese_script: "auto", tts_auto: false, translation: true, tone_style: "marks", font_size: 16, confidence: .65, threads: 2, ocr_device: "auto" },
+  settings: { enabled: true, chinese_script: "auto", tts_auto: false, translation: true, tone_style: "marks", font_size: 14, confidence: .65, threads: 2, ocr_device: "auto" },
   result: fixture,
 };
 const store = new Store();
@@ -54,6 +54,10 @@ Object.assign((window as any).preview, {
   tradition: () => store.update({ ...state, result: { ...state.result!, lines: [{ ...state.result!.lines[0], text: "銀行的行長喜歡旅行。", tokens: [..."銀行的行長喜歡旅行。"].map((text) => ({text, pinyin: "háng"})) }] } }),
   narrow: () => store.update({ ...state, result: { ...state.result!, lines: [{ ...state.result!.lines[0], rect: { left: .2, top: .4, right: .21, bottom: .45 } }] } }),
   crowded: () => store.update({ ...state, settings: { ...state.settings, font_size: 32 }, result: { ...state.result!, lines: Array.from({length: 8}, () => ({ ...state.result!.lines[0], tokens: Array(20).fill(state.result!.lines[0].tokens).flat(), rect: { left: .4, top: .5, right: .41, bottom: .55 } })) } }),
+  bottomDialogue: () => store.update({ ...state, result: { ...state.result!, lines: [.82, .87, .92, .97].map(top => ({
+    ...state.result!.lines[0], tokens: Array(3).fill(state.result!.lines[0].tokens).flat(),
+    rect: { left: .32, top, right: .84, bottom: top + .04 },
+  })) } }),
   multi: () => store.update({ ...state, result: { ...state.result!, lines: [
     { ...state.result!.lines[0], rect: { left: .02, top: .02, right: .43, bottom: .07 } },
     { ...state.result!.lines[0], rect: { left: .52, top: .72, right: .98, bottom: .79 } },

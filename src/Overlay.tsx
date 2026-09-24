@@ -1,3 +1,4 @@
+import { FaVolumeUp } from "react-icons/fa";
 import { findModuleChild, useQuickAccessVisible } from "@decky/ui";
 import { useLayoutEffect, useRef, useState } from "react";
 import { paginateLabels } from "./layout";
@@ -65,8 +66,8 @@ function ReadingSurface({ store }: { store: Store }) {
     const line = result!.lines[index];
     const font = state!.settings.font_size;
     const textWidth = line.tokens.reduce((sum, token) => sum + Math.max(token.text.length * font,
-      token.pinyin.length * font * .64 * .6) + 3, 0) + 64;
-    return Math.min(width - 24, 680, Math.max(360, textWidth, (line.rect.right - line.rect.left) * width + 28));
+      token.pinyin.length * font * .64 * .6) + 2, 0) + 36;
+    return Math.min(width - 24, 680, Math.max(240, textWidth, (line.rect.right - line.rect.left) * width + 16));
   };
   useLayoutEffect(() => {
     if (!result) return;
@@ -95,16 +96,16 @@ function ReadingSurface({ store }: { store: Store }) {
             style={{ position: "absolute", visibility: shown ? "visible" : "hidden", left: position?.left ?? 4,
               top: position?.top ?? 32, width: cardWidth(index), maxHeight: height - 48,
               flexShrink: 0, writingMode: "horizontal-tb",
-              padding: "5px 8px", boxSizing: "border-box", borderRadius: 5, color: "#f5f7fa", background: "rgba(9,17,26,.94)",
+              padding: "3px 6px", boxSizing: "border-box", borderRadius: 5, color: "#f5f7fa", background: "rgba(9,17,26,.94)",
               fontFamily: "sans-serif", overflowY: "auto", pointerEvents: shown ? "auto" : "none" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <div style={{ flex: 1, minWidth: 0, fontSize: state.settings.font_size, lineHeight: 1.85, overflowWrap: "normal" }}>
-                {line.tokens.map((token, i) => token.pinyin ? <ruby key={i} style={{ display: "inline-flex", flexDirection: "column-reverse", alignItems: "center", verticalAlign: "bottom", marginRight: 3, whiteSpace: "nowrap", lineHeight: 1.3 }}>{token.text}<rt style={{ display: "block", fontSize: ".64em", color: "#98dfc2", lineHeight: 1.25 }}>{token.pinyin}</rt></ruby> : <span key={i}>{token.text}</span>)}
+            <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <div style={{ flex: 1, minWidth: 0, fontSize: state.settings.font_size, lineHeight: 1.1, overflowWrap: "normal" }}>
+                {line.tokens.map((token, i) => token.pinyin ? <ruby key={i} style={{ display: "inline-flex", flexDirection: "column-reverse", alignItems: "center", verticalAlign: "bottom", marginRight: 2, whiteSpace: "nowrap", lineHeight: 1.2 }}>{token.text}<rt style={{ display: "block", fontSize: ".64em", color: "#98dfc2", lineHeight: 1.15 }}>{token.pinyin}</rt></ruby> : <span key={i}>{token.text}</span>)}
               </div>
               <button aria-label={`Speak Chinese line ${index + 1}`} onClick={() => speak(index)}
-                style={{ color: "#98dfc2", background: "transparent", border: 0, padding: 5, fontSize: 18 }}>🔊</button>
+                style={{ color: "#98dfc2", background: "transparent", border: 0, padding: 2, flexShrink: 0, lineHeight: 1 }}><FaVolumeUp size={14} aria-hidden="true" /></button>
             </div>
-            {state.settings.translation && <div style={{ fontSize: Math.max(13, state.settings.font_size - 3), lineHeight: 1.3, color: "#e1e8f2" }}>
+            {state.settings.translation && <div style={{ fontSize: Math.max(10, state.settings.font_size - 3), lineHeight: 1.2, color: "#e1e8f2" }}>
               {line.translation || (result.translating ? "Translating…" : result.translation_error ? "Translation unavailable" : "")}
             </div>}
           </div>;

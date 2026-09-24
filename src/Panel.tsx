@@ -54,14 +54,14 @@ export function Panel({ store, controller }: { store: Store; controller: Control
       <PanelSectionRow><DropdownItem label="Pinyin tones" selectedOption={state.settings.tone_style} disabled={busy}
         rgOptions={[{ data: "marks", label: "Tone marks · nǐ hǎo" }, { data: "numbers", label: "Numbers · ni3 hao3" }, { data: "none", label: "No tones · ni hao" }]}
         onChange={(option) => save("tone_style", option.data)} /></PanelSectionRow>
-      <PanelSectionRow><SliderField label="Text size" value={state.settings.font_size} min={16} max={32} step={2} disabled={busy}
+      <PanelSectionRow><SliderField label="Text size" value={state.settings.font_size} min={14} max={32} step={2} disabled={busy}
         onChange={(value) => save("font_size", value)} /></PanelSectionRow>
     </PanelSection>
     <PanelSection title="Speech">
 
       <PanelSectionRow><ButtonItem disabled={busy || !state.result?.lines.length} layout="below" onClick={() => void action(() => rpc.speak(-1))}>Speak captured Chinese</ButtonItem></PanelSectionRow>
       {(state.speech_status === "generating" || state.speech_status === "speaking") && <PanelSectionRow><ButtonItem layout="below" onClick={() => void action(rpc.stopSpeech)}>Stop speech</ButtonItem></PanelSectionRow>}
-      <PanelSectionRow><div style={{ fontSize: 12 }}>Offline Mandarin · Piper Huayan medium. Tap 🔊 beside a line to read it.{state.speech_error && <p>{state.speech_error}</p>}</div></PanelSectionRow>
+      <PanelSectionRow><div style={{ fontSize: 12 }}>Offline Mandarin · Piper Huayan medium. Tap the speaker icon beside a line to read it.{state.speech_error && <p>{state.speech_error}</p>}</div></PanelSectionRow>
     </PanelSection>
     <PanelSection title="Performance">
       <PanelSectionRow><DropdownItem label="OCR processor" selectedOption={state.settings.ocr_device} disabled={busy}

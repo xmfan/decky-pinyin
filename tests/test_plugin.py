@@ -85,7 +85,7 @@ async def test_disabled_preference_persists_but_pause_preserves_enabled(plugin_m
     module, _ = plugin_module
     plugin = module.Plugin()
     await plugin._main()
-    assert plugin.settings.enabled and plugin.settings.font_size == 16
+    assert plugin.settings.enabled and plugin.settings.font_size == 14
     await plugin.pause()
     assert plugin.settings.enabled
     await plugin.stop()

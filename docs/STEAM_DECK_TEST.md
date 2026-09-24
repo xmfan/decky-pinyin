@@ -1,6 +1,6 @@
 # Steam Deck acceptance test
 
-The user confirmed 0.5.1 capture and overlay work. The following 0.7.2 checks are pending on a physical Steam Deck. Host tests cannot establish Gamescope capture, Steam overlay rendering, or in-game latency/power impact.
+The user confirmed 0.7.2 capture, speech and overlay work. The following 0.7.3 checks are pending on a physical Steam Deck. Host tests cannot establish Gamescope capture, Steam overlay rendering, or in-game latency/power impact.
 
 ## Install and offline inference
 
@@ -52,4 +52,6 @@ If capture fails, inspect Decky's plugin log and run `pw-dump` as the Deck user.
 - Verify narrow OCR boxes still produce wide labels; pinyin syllables and label cards must not overlap. Dense captures should expose Previous/Next buttons, keep each page nonempty and make every line reachable. No scrolling-list message should appear.
 - Confirm the game remains visible through light dimming; no captured screenshot or opaque full-screen background should cover it.
 
-- Confirm 0.7.2 shows labels in Gaming Mode while speech runs. Confirm handheld/docked resizing keeps labels aligned; resizing/opening other Steam windows must not change overlay placement.
+- Confirm 0.7.3 shows labels in Gaming Mode while speech runs. Confirm handheld/docked resizing keeps labels aligned; resizing/opening other Steam windows must not change overlay placement.
+
+- Capture four dialogue rows near the bottom: labels must remain in reading order, shifting upward together without overlap. Confirm 14 px Chinese, smaller pinyin and 11 px English are readable, with compact spacing and a plain speaker icon.
