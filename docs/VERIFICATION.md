@@ -39,3 +39,9 @@ On the ARM Mac development host, Metal profiling recorded 1,920 GPU detection no
 Auto mode falls back to CPU when GPU setup or inference raises an error; explicit GPU mode reports the failure. Both paths have regression coverage. Steam Deck Vulkan driver compatibility, actual GPU execution, frame time, power, and latency remain unverified.
 
 A subsequent translation experiment verified native GPU encoder and decoder execution, but measured 137.9 ms after optimization versus 57.2 ms for the shipped CPU translator on the same Mac fixture. It remains a development probe. Reproduction, pinned weights, and limitations are in `docs/TRANSLATION_GPU.md`.
+
+## Full-screen manual capture (0.4.0)
+
+Removed all percentage-based capture settings and cropping. Manual OCR now receives the entire frame. Capture first clears the overlay and requests frontend preparation; the frontend closes Quick Access and allows 250 ms after React commits the cleared view before acknowledging. Only the current, acknowledged request can reach the screenshot worker. Dismissal or a newer tap invalidates an older acknowledgment. Missing acknowledgment times out with a retry message instead of capturing the overlay.
+
+37 Python tests pass, including full-frame corner preservation and the capture acknowledgment sequence. The browser check verifies the overlay is absent before acknowledgment and the menu-close command is issued. TypeScript and production builds pass. This does not establish Steam compositor timing on hardware; repeat the physical-device acceptance procedure.

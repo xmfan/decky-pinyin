@@ -6,14 +6,14 @@ A personal Decky plugin for **Chinese text → tone-marked pinyin + English on d
 
 ## Install
 
-1. Copy `out/Decky-Pinyin-0.3.0-offline.zip` to your Steam Deck.
+1. Copy `out/Decky-Pinyin-0.4.0-offline.zip` to your Steam Deck.
 2. In Decky settings, enable Developer Mode. Open Developer → Install Plugin from ZIP and select the file.
 3. Launch a game in Gaming Mode and open **Decky Pinyin**.
-4. Disable the original Decky Translator shortcut if it also uses L4. Choose a reading area and press **Enable L4 shortcut**; allow the local models to load.
+4. Disable the original Decky Translator shortcut if it also uses L4. Press **Enable L4 shortcut**; allow the local models to load.
 5. Close the menu and **tap L4** to capture. **Hold L4 for 0.65 seconds** to dismiss. Tap again whenever the dialogue changes.
 6. The panel also has **Capture now** and **Dismiss overlay** buttons. Disable the shortcut to unload the models. Settings changes disable it; enable it again afterward.
 
-Download the actual `Decky-Pinyin-0.3.0-offline.zip` release asset. If downloading the Actions artifact named `decky-pinyin-offline.zip`, extract that wrapper once and install the inner versioned offline ZIP.
+Download the actual `Decky-Pinyin-0.4.0-offline.zip` release asset. If downloading the Actions artifact named `decky-pinyin-offline.zip`, extract that wrapper once and install the inner versioned offline ZIP.
 
 The ZIP includes Python, dependencies, OCR weights, the neural pinyin model, and the translation model. **No model setup, API keys, network connection, or system Python changes are needed on the Deck.** Building the ZIP on a developer machine requires downloads once. Existing Decky Loader and SteamOS PipeWire/GStreamer components are required. Desktop Mode is not currently supported.
 
@@ -24,7 +24,7 @@ The ZIP includes Python, dependencies, OCR weights, the neural pinyin model, and
 - PP-OCRv4 mobile detection/recognition with experimental native WebGPU acceleration (Vulkan on Linux). Default Auto mode attempts GPU and reports CPU fallback if unavailable; explicit GPU and CPU modes are also available. Unsupported GPU operations can still use CPU kernels; horizontal Chinese text is the intended input. Stylized fonts, vertical text, motion blur, and very small glyphs may be missed.
 - OPUS-MT Chinese-to-English, converted to int8 CTranslate2, with greedy decoding for speed. Translation quality is limited by this compact model and OCR quality. English is the current target language.
 - Pinyin appears before translation. Old translations never replace newer dialogue.
-- Default capture is the bottom 40%, once per tap. Also supports upper/lower 70%. The overlay occupies the opposite 27%; those display pixels are deliberately outside OCR to prevent feedback.
+- Every tap captures the full screen. The old overlay and Quick Access menu are hidden first, with a brief settling delay before capture to avoid reading our own text. There are no capture-region options. Results appear at the top.
 - Models remain loaded while enabled. Each request opens a short PipeWire capture, preferring a PNG snapshot with raw RGB fallback. Repeated taps retain only the latest waiting request; dismissed or superseded results cannot reappear. The overlay stays until dismissed or replaced.
 - Stop/unload terminates the worker and capture process group, freeing memory. Suspend stops the session; enable the shortcut after waking.
 - No screenshot files, text history, telemetry, remote fonts, or inference HTTP requests. Python inference refuses IP socket connections. Only settings are persisted; diagnostics go to Decky's plugin log.

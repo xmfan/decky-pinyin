@@ -9,17 +9,10 @@ from backend.capture import PipeWireCapture, gamescope_node
 from backend.config import Settings
 
 
-@pytest.mark.parametrize("values", [{"interval_ms": 0}, {"threads": 32}, {"translation": "true"}, {"region": "full"}, {"confidence": float("nan")}, {"threads": True}, {"shell": "hi"}])
+@pytest.mark.parametrize("values", [{"interval_ms": 0}, {"threads": 32}, {"translation": "true"}, {"confidence": float("nan")}, {"threads": True}, {"shell": "hi"}])
 def test_invalid_settings_rejected(values):
     with pytest.raises(ValueError):
         Settings.parse(values)
-
-
-def test_overlay_and_crop_never_overlap():
-    for region in ("subtitles", "lower", "upper"):
-        x0, y0, x1, y1 = Settings(region=region).crop(1280, 800)
-        assert x0 == 0 and x1 == 1280
-        assert y1 <= 560 if region == "upper" else y0 >= 240
 
 
 def test_capture_only_chooses_gamescope_and_preserves_aspect():

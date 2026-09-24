@@ -120,3 +120,19 @@ def test_change_detector_notices_local_character_sized_edit():
     detector.changed(image, 1)
     image[240:260, 600:610] = 255
     assert detector.changed(image, 1.5)
+
+
+@pytest.mark.asyncio
+async def test_ocr_receives_entire_frame_including_all_four_corners():
+    image = np.zeros((800, 1280, 3), dtype=np.uint8)
+    image[0, 0], image[0, -1], image[-1, 0], image[-1, -1] = 10, 20, 30, 40
+    received = []
+    class FullScreenOcr:
+        def recognize(self, rgb):
+            received.append(rgb.copy())
+            return []
+    async def emit(_):
+        pass
+    pipeline = Pipeline(Settings(), FullScreenOcr(), Pinyin(), None, emit)
+    await pipeline.process(Frame(image, time.monotonic(), 1))
+    np.testing.assert_array_equal(received[0], image)

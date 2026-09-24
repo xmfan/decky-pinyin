@@ -13,7 +13,7 @@ await build({
   plugins: [{ name: "decky-test-shim", setup(builder) {
     builder.onResolve({ filter: /^@decky\/(ui|api)$/ }, (args) => ({ path: args.path, namespace: "decky-shim" }));
     builder.onLoad({ filter: /.*/, namespace: "decky-shim" }, () => ({ contents:
-      "export const findModuleChild=()=>()=>{}; export const useQuickAccessVisible=()=>false; export const callable=()=>()=>Promise.resolve({});" }));
+      "export const findModuleChild=()=>()=>{}; export const useQuickAccessVisible=()=>false; export const Navigation={CloseSideMenus:()=>{window.menuClosed=true;}}; export const callable=(name)=>(...args)=>{if(name==='capture_ready'){window.captureAck={args,overlayVisible:!!document.querySelector('ruby'),menuClosed:window.menuClosed};} return Promise.resolve(window.previewState||{});};" }));
   } }],
 });
 await writeFile(path.join(root, ".cache/overlay-preview.html"), `<!doctype html><html><head><meta charset="utf-8"><title>Decky Pinyin overlay test</title></head><body style="margin:0;background:#141b26"><img src="../artifacts/ocr-fixture.png" style="position:fixed;width:100vw;height:100vh;object-fit:fill"/><div id="root"></div><script src="./overlay-preview.js"></script></body></html>`);
@@ -51,15 +51,18 @@ try {
   await page.evaluate(() => window.preview.large());
   await page.waitForTimeout(100);
   await checkBounds();
-  await page.evaluate(() => window.preview.upper());
-  await page.waitForTimeout(100);
-  const box = await page.locator('[aria-live="polite"]').boundingBox();
-  assert(box.y >= 580, "Upper capture must dock overlay at bottom");
+  await page.evaluate(() => window.preview.capture());
+  await page.waitForTimeout(50);
+  assert.equal(await page.locator("ruby").count(), 0, "Old overlay must hide before capture");
+  assert.equal(await page.evaluate(() => window.captureAck), undefined, "Capture acknowledged before settling");
+  await page.clock.runFor(300);
+  const ack = await page.evaluate(() => window.captureAck);
+  assert.deepEqual(ack, { args: [10], overlayVisible: false, menuClosed: true });
   await page.evaluate(() => window.preview.stop());
   await page.waitForTimeout(100);
   assert.equal(await page.locator("ruby").count(), 0);
   assert.deepEqual(errors, []);
-  console.log("Overlay verified at 1280×800: ruby alignment, text fit, dock switching, stale-state rejection, stop cleanup. Steam composition hook is stubbed; physical Deck still required.");
+  console.log("Overlay verified at 1280×800: ruby alignment, text fit, capture hides overlay before acknowledgment, stale-state rejection, stop cleanup. Steam composition hook is stubbed; physical Deck still required.");
 } finally {
   await browser.close();
 }

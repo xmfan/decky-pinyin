@@ -11,7 +11,7 @@ These checks are **pending until performed on a physical Steam Deck**. Host test
 
 ## Manual capture and L4 behavior
 
-1. Test bottom subtitle, lower, and upper regions. Overlay and OCR regions must not overlap. Confirm 1280×800 and docked 1920×1080 aspect ratios.
+1. Confirm Chinese near all four screen edges is detected at 1280×800 and docked 1920×1080. Capture again while results are visible: the old overlay must hide before the screenshot and must not appear in the next OCR result. Confirm there are no capture-region controls.
 2. Change dialogue quickly and tap L4 after each change. New pinyin must appear before translation; translation from a previous line must not overwrite current dialogue.
 3. Hold L4 for 0.65 seconds. The overlay must clear and stay cleared when translation finishes. Release must not capture. Tap again to refresh; leave it for 60 seconds and confirm it stays visible without repeated inference.
 4. Check dense menus and long dialogue for wrapping/clipping. The current overlay has a fixed 27% display area; dense scenes may exceed its capacity.
@@ -26,7 +26,7 @@ Initial targets (not verified guarantees): pinyin p95 below 500 ms; English p95 
 
 ## GPU OCR comparison
 
-With capture stopped, run the bundled benchmark once with `--ocr-device cpu` and once with `--ocr-device gpu`. Record initialization failures and timings. Enable the shortcut in Auto mode, then tap L4 and check the panel reports OCR (gpu) or an explanatory CPU fallback notice. Repeat the game FPS/power comparison in explicit CPU and GPU modes at the same TDP and settings. Keep the mode that improves subtitle latency without an unacceptable game impact. Pinyin and translation remain on CPU in 0.3.0.
+With capture stopped, run the bundled benchmark once with `--ocr-device cpu` and once with `--ocr-device gpu`. Record initialization failures and timings. Enable the shortcut in Auto mode, then tap L4 and check the panel reports OCR (gpu) or an explanatory CPU fallback notice. Repeat the game FPS/power comparison in explicit CPU and GPU modes at the same TDP and settings. Keep the mode that improves subtitle latency without an unacceptable game impact. Pinyin and translation remain on CPU in 0.4.0.
 
 A capture failure should leave models loaded and allow another tap to retry. The continuous-capture timeout from 0.2.0 should no longer occur while idle.
 

@@ -1,5 +1,6 @@
-import { findModuleChild, useQuickAccessVisible } from "@decky/ui";
-import { Store, useStateSnapshot } from "./store";
+import { findModuleChild, Navigation, useQuickAccessVisible } from "@decky/ui";
+import { useEffect } from "react";
+import { rpc, Store, useStateSnapshot } from "./store";
 
 // Steam's composition hook maintains the notification layer while gameplay keeps focus.
 // Discovery follows Decky-Translator's ActivationIndicator (GPL-3.0, see THIRD_PARTY.md).
@@ -26,11 +27,22 @@ export function Overlay({ store }: { store: Store }) {
   const state = useStateSnapshot(store);
   const menuOpen = useQuickAccessVisible();
   const result = state?.result;
-  if (!overlaySupported || menuOpen || state?.status !== "running" || !result?.lines.length) return null;
-  const bottom = state.settings.region === "upper";
+  const request = state?.capture_request;
+  const status = state?.status;
+  useEffect(() => {
+    if (request == null || status !== "running") return;
+    // This effect runs after React removes the old overlay. Let Steam present the
+    // cleared view and close its menu before acknowledging the snapshot request.
+    Navigation.CloseSideMenus();
+    const timer = setTimeout(() => {
+      void rpc.captureReady(request).then(store.update).catch(console.error);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [request, status, store]);
+  if (!overlaySupported || request != null || menuOpen || state?.status !== "running" || !result?.lines.length) return null;
   return <>
     <Composition />
-    <div aria-live="polite" style={{ position: "fixed", left: 0, right: 0, [bottom ? "bottom" : "top"]: 0,
+    <div aria-live="polite" style={{ position: "fixed", left: 0, right: 0, top: 0,
       maxHeight: "27vh", boxSizing: "border-box", zIndex: 8000, pointerEvents: "none", padding: "10px 24px",
       color: "#f5f7fa", background: "rgba(9, 17, 26, 0.92)", fontFamily: "sans-serif", overflow: "hidden" }}>
       <div style={{ color: "#a4ccad", fontSize: 11, letterSpacing: "0.12em", marginBottom: 6 }}>DECKY PINYIN · LOCAL</div>

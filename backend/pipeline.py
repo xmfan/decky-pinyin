@@ -60,14 +60,13 @@ class Pipeline:
                 await asyncio.gather(self.translation_task, return_exceptions=True)
 
     async def process(self, frame):
-        x0, y0, x1, y1 = self.settings.crop(frame.rgb.shape[1], frame.rgb.shape[0])
-        crop = frame.rgb[y0:y1, x0:x1]
+        image = frame.rgb
         now = time.monotonic()
-        if not self.detector.changed(crop, now):
+        if not self.detector.changed(image, now):
             self.skipped += 1
             return
         start = time.perf_counter()
-        recognized = await asyncio.to_thread(self.ocr.recognize, crop)
+        recognized = await asyncio.to_thread(self.ocr.recognize, image)
         ocr_ms = (time.perf_counter() - start) * 1000
         texts = tuple(line["text"] for line in recognized)
         if texts == self.texts:

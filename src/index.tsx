@@ -39,22 +39,14 @@ function Panel({ store }: { store: Store }) {
         return next;
       })}>{running ? "Disable L4 shortcut" : "Enable L4 shortcut"}</ButtonItem></PanelSectionRow>
       {state.status === "running" && <>
-        <PanelSectionRow><ButtonItem disabled={busy} layout="below" onClick={() => void action(async () => {
-          Navigation.CloseSideMenus();
-          await new Promise((resolve) => setTimeout(resolve, 300));
-          return rpc.capture();
-        })}>{state.busy ? "Capture latest screen" : "Capture now"}</ButtonItem></PanelSectionRow>
+        <PanelSectionRow><ButtonItem disabled={busy} layout="below" onClick={() => void action(rpc.capture)}>{state.busy ? "Capture latest screen" : "Capture now"}</ButtonItem></PanelSectionRow>
         <PanelSectionRow><ButtonItem disabled={busy} layout="below" onClick={() => void action(rpc.dismiss)}>Dismiss overlay</ButtonItem></PanelSectionRow>
       </>}
       <PanelSectionRow><div style={{ fontSize: 12, lineHeight: 1.5, color: "#a7b7c6" }}>
-        Tap L4 to capture Chinese text. Hold L4 for 0.65 seconds to dismiss. Results stay visible until dismissed or replaced. Models stay loaded while enabled. Settings changes disable the shortcut; enable it again afterward.
+        Tap L4 to capture the full screen. The overlay hides briefly before each capture. Hold L4 for 0.65 seconds to dismiss. Results stay visible until dismissed or replaced. Models stay loaded while enabled. Settings changes disable the shortcut; enable it again afterward.
       </div></PanelSectionRow>
     </PanelSection>
-    <PanelSection title="Reading area">
-      <PanelSectionRow><DropdownItem label="Capture region" selectedOption={state.settings.region} disabled={busy}
-        rgOptions={[{ data: "subtitles", label: "Subtitles · bottom 40%" }, { data: "lower", label: "Lower 70%" }, { data: "upper", label: "Upper 70%" }]}
-        onChange={(option) => save("region", option.data)} /></PanelSectionRow>
-      <PanelSectionRow><div style={{ fontSize: 12, color: "#a7b7c6" }}>The overlay sits outside the reading area so it cannot read itself.</div></PanelSectionRow>
+    <PanelSection title="Display">
       <PanelSectionRow><ToggleField label="English translation" checked={state.settings.translation} disabled={busy} onChange={(value) => save("translation", value)} /></PanelSectionRow>
       <PanelSectionRow><DropdownItem label="Pinyin tones" selectedOption={state.settings.tone_style} disabled={busy}
         rgOptions={[{ data: "marks", label: "Tone marks · nǐ hǎo" }, { data: "numbers", label: "Numbers · ni3 hao3" }, { data: "none", label: "No tones · ni hao" }]}

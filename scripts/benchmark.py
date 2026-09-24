@@ -35,14 +35,14 @@ def main():
     pinyin, ocr, translator = PinyinEngine(), OcrEngine(settings), TranslationEngine(args.models)
     init_ms = (time.perf_counter() - start) * 1000
     image = Image.open(args.image).convert("RGB")
-    crop = np.asarray(image.crop(settings.crop(*image.size)))
+    pixels = np.asarray(image)
     timings = {"ocr_ms": [], "pinyin_ms": [], "translation_ms": [], "total_ms": []}
     for _ in range(args.repeats):
         # Measure real inference, not a cache hit.
         pinyin.convert.cache_clear()
         translator.translate.cache_clear()
         start = time.perf_counter()
-        lines, ocr_ms = timed_call(ocr.recognize, crop)
+        lines, ocr_ms = timed_call(ocr.recognize, pixels)
         assert len(lines) == 2, f"Expected two subtitle lines: {lines}"
         assert lines[0]["text"] == "你好，欢迎来到这里。", lines
         assert lines[1]["text"] == "请打开地图，寻找附近的村庄。", lines

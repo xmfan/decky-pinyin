@@ -5,7 +5,6 @@ import math
 @dataclass(frozen=True)
 class Settings:
     interval_ms: int = 500
-    region: str = "subtitles"
     translation: bool = True
     tone_style: str = "marks"
     font_size: int = 22
@@ -25,8 +24,6 @@ class Settings:
             value = values[name]
             if type(value) is not int or not lo <= value <= hi:
                 raise ValueError(f"{name} must be an integer from {lo} to {hi}")
-        if values["region"] not in ("subtitles", "lower", "upper"):
-            raise ValueError("Unknown capture region")
         if values["tone_style"] not in ("marks", "numbers", "none"):
             raise ValueError("Unknown tone style")
         if values["ocr_device"] not in ("cpu", "gpu", "auto"):
@@ -40,8 +37,3 @@ class Settings:
 
     def dict(self):
         return asdict(self)
-
-    def crop(self, width, height):
-        # The overlay occupies the opposite 27% of the display. Never OCR it.
-        top, bottom = {"subtitles": (0.60, 1.0), "lower": (0.30, 1.0), "upper": (0.0, 0.70)}[self.region]
-        return (0, int(height * top), width, int(height * bottom))

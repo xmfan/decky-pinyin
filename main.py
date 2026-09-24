@@ -22,6 +22,7 @@ class Plugin:
         self.errors = None
         self.version = 0
         self.request_id = 0
+        self.capture_waiter = None
         self.input_tasks = set()
         self.buttons = None
         self.input_status = "Enable to use L4"
@@ -33,7 +34,7 @@ class Plugin:
             pass
         except (ValueError, OSError) as exc:
             decky.logger.warning("Using default settings: %s", exc)
-        self.state = {"status": "stopped", "message": "Ready", "result": None, "busy": False}
+        self.state = {"status": "stopped", "message": "Ready", "result": None, "busy": False, "capture_request": None}
 
     async def get_state(self):
         return {**self.state, "version": self.version, "settings": self.settings.dict(),
@@ -107,17 +108,54 @@ class Plugin:
             except (BrokenPipeError, ConnectionResetError):
                 self.state.update(status="error", message="Worker disconnected; disable and enable to restart.", busy=False)
 
+    def _clear_capture_wait(self):
+        if self.capture_waiter:
+            self.capture_waiter.cancel()
+            self.capture_waiter = None
+        self.state["capture_request"] = None
+
+    async def _capture_timeout(self, request):
+        await asyncio.sleep(5)
+        async with self.lock:
+            if self.state["capture_request"] == request:
+                self.capture_waiter = None
+                self.state.update(capture_request=None, busy=False,
+                    message="Screen preparation timed out. Tap L4 to retry or reload the plugin.")
+                await self._notify()
+
     async def capture(self):
         async with self.lock:
             if self.state["status"] != "running":
                 return await self.get_state()
-            self.state.update(result=None, busy=True, message="Capturing screen…")
+            self._clear_capture_wait()
+            # Invalidate ongoing work immediately, but wait for the frontend to
+            # remove its overlay before sending the actual capture command.
+            await self._send_command("dismiss")
+            if self.state["status"] != "running":
+                await self._notify()
+                return await self.get_state()
+            self.state.update(result=None, busy=True, capture_request=self.request_id,
+                              message="Preparing full-screen capture…")
+            self.capture_waiter = asyncio.create_task(self._capture_timeout(self.request_id))
+            self.input_tasks.add(self.capture_waiter)
+            self.capture_waiter.add_done_callback(self._input_done)
+            await self._notify()
+            return await self.get_state()
+
+    async def capture_ready(self, request):
+        async with self.lock:
+            if (type(request) is not int or self.state["capture_request"] != request
+                    or self.state["status"] != "running"):
+                return await self.get_state()
+            self._clear_capture_wait()
+            self.state["message"] = "Capturing full screen…"
             await self._send_command("capture")
             await self._notify()
             return await self.get_state()
 
     async def dismiss(self):
         async with self.lock:
+            self._clear_capture_wait()
             self.state.update(result=None, busy=False, message="Dismissed · tap L4 for another capture")
             await self._send_command("dismiss")
             await self._notify()
@@ -159,6 +197,7 @@ class Plugin:
             decky.logger.info("worker: %s", chunk.decode(errors="replace").rstrip())
 
     async def _stop(self):
+        self._clear_capture_wait()
         self.request_id += 1
         if self.buttons:
             self.buttons.close()

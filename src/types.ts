@@ -1,6 +1,5 @@
 export interface Settings {
   interval_ms: number;
-  region: "subtitles" | "lower" | "upper";
   translation: boolean;
   tone_style: "marks" | "numbers" | "none";
   font_size: number;
@@ -32,5 +31,6 @@ export interface State {
   settings: Settings;
   installed: boolean;
   busy?: boolean;
+  capture_request?: number | null;
   input_status?: string;
 }

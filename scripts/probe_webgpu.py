@@ -37,11 +37,11 @@ def main():
     from rapidocr_onnxruntime.utils import infer_engine
 
     image = Image.open(ROOT / "artifacts/ocr-fixture.png").convert("RGB")
-    crop = np.asarray(image.crop(Settings().crop(*image.size)))
+    pixels = np.asarray(image)
     baseline = OcrEngine(Settings(ocr_device="cpu"))
-    baseline.recognize(crop)
-    cpu_times = [timed_call(baseline.recognize, crop)[1] for _ in range(args.repeats)]
-    expected = [line["text"] for line in baseline.recognize(crop)]
+    baseline.recognize(pixels)
+    cpu_times = [timed_call(baseline.recognize, pixels)[1] for _ in range(args.repeats)]
+    expected = [line["text"] for line in baseline.recognize(pixels)]
 
     ort.register_execution_provider_library("decky_pinyin_webgpu_probe", webgpu.get_library_path())
     devices = [d for d in ort.get_ep_devices() if d.ep_name == webgpu.get_ep_name()]
@@ -71,10 +71,10 @@ def main():
         initialize_ms = (time.perf_counter() - started) * 1000
     finally:
         infer_engine.InferenceSession = original
-    engine.recognize(crop)  # shader compilation / warmup excluded
+    engine.recognize(pixels)  # shader compilation / warmup excluded
     gpu_times = []
     for _ in range(args.repeats):
-        lines, elapsed = timed_call(engine.recognize, crop)
+        lines, elapsed = timed_call(engine.recognize, pixels)
         actual = [line["text"] for line in lines]
         assert actual == expected, {"cpu": expected, "gpu": actual}
         gpu_times.append(elapsed)
