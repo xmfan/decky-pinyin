@@ -63,3 +63,7 @@ The user confirmed 0.5.1 works on the Steam Deck. 0.6.0 uses 200 ms holds for L5
 Offline Piper 1.4.2 and the pinned Huayan medium voice provide Mandarin speech, triggered per line, from the panel, or automatically when enabled. A real offline synthesis test checks valid non-silent 22,050 Hz mono audio. Speech uses a separate process group and is stopped by capture, dismissal, explicit Stop, disable or unload. Browser tests cover short L5 holds, early release, L4 inactivity, default enable/remembered disable, speech button dispatch, adjacent labels, screen bounds and docked layout. Linux CI additionally exercises the packaged voice and native player with a PipeWire null sink. Physical playback and the new interactions still need a Deck test.
 
 38 Python tests pass locally, along with TypeScript checking, the production build and browser interaction checks. Both old and new PipeWire player argument formats are covered.
+
+## Automatic speech default (0.6.1)
+
+The user selected automatic Mandarin reading after capture. Fresh installs now default Read Chinese after capture to on; the existing toggle allows disabling it. Existing explicit settings are preserved. The previously verified once-per-capture speech behavior is unchanged.

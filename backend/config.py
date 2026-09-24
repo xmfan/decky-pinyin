@@ -6,7 +6,7 @@ import math
 class Settings:
     enabled: bool = True
     chinese_script: str = "auto"
-    tts_auto: bool = False
+    tts_auto: bool = True
     translation: bool = True
     tone_style: str = "marks"
     font_size: int = 16

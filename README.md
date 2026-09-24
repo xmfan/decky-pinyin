@@ -2,18 +2,18 @@
 
 A personal Decky plugin for **Chinese text → tone-marked pinyin + English on demand**, entirely on the Steam Deck. Inspired by [Decky-Translator](https://github.com/cat-in-a-box/Decky-Translator).
 
-**Status:** the user confirmed that 0.5.1 capture and overlay work on their Steam Deck. The 0.6.0 controls, positioned labels, traditional-script handling and speech pass host checks; those additions still need device testing. Deck latency and game performance have not been measured.
+**Status:** the user confirmed that 0.5.1 capture and overlay work on their Steam Deck. The 0.6.1 controls, positioned labels, traditional-script handling and speech pass host checks; those additions still need device testing. Deck latency and game performance have not been measured.
 
 ## Install
 
-1. Copy `out/Decky-Pinyin-0.6.0-offline.zip` to your Steam Deck.
+1. Copy `out/Decky-Pinyin-0.6.1-offline.zip` to your Steam Deck.
 2. In Decky settings, enable Developer Mode. Open Developer → Install Plugin from ZIP and select the file.
 3. Launch a game in Gaming Mode and open **Decky Pinyin**.
 4. The **L5 shortcut is enabled by default**; allow the local models to load. Disable any other plugin shortcut using L5.
 5. Close the menu and **hold L5 for 0.2 seconds** to capture. **Hold L5 for 0.2 seconds** to dismiss, then hold it again for the next capture. A progress indicator shows activation.
 6. The panel also has **Capture now** and **Dismiss overlay** buttons. Disable the shortcut to unload the models. Settings changes restart models when enabled. Disabling the shortcut is remembered across reloads.
 
-Download the actual `Decky-Pinyin-0.6.0-offline.zip` release asset. If downloading the Actions artifact named `decky-pinyin-offline.zip`, extract that wrapper once and install the inner versioned offline ZIP.
+Download the actual `Decky-Pinyin-0.6.1-offline.zip` release asset. If downloading the Actions artifact named `decky-pinyin-offline.zip`, extract that wrapper once and install the inner versioned offline ZIP.
 
 The ZIP includes Python, dependencies, OCR weights, the neural pinyin model, the translation model, and an offline Mandarin voice. **No model setup, API keys, network connection, or system Python changes are needed on the Deck.** Building the ZIP on a developer machine requires downloads once. Existing Decky Loader and SteamOS PipeWire/GStreamer components are required. Desktop Mode is not currently supported.
 
@@ -28,7 +28,7 @@ Capture and controller handling are ported from Decky-Translator; see [upstream 
 - Pinyin appears before translation. Old translations never replace newer dialogue.
 - Every activation captures the full screen. The old overlay and Quick Access menu are hidden first, with a brief settling delay before capture to avoid reading our own text. There are no capture-region options. The captured screenshot appears first; each pinyin/English label appears near the corresponding original text, with collision handling and screen-edge clamping. Default text size is 16 px, the slider minimum.
 - Models remain loaded while enabled. Each request opens a short PipeWire capture, preferring a PNG snapshot with raw RGB fallback. Dismissed or superseded results cannot reappear. Requests are serialized; the overlay stays until dismissed or replaced.
-- Tap **🔊** on a label to hear that line in Mandarin, or use **Speak captured Chinese** in the panel. **Read Chinese after capture** enables automatic speech (off by default). The bundled Piper Huayan voice runs on CPU and plays through SteamOS audio. Capture, dismissal, Stop speech and unload stop playback.
+- Tap **🔊** on a label to hear that line in Mandarin, or use **Speak captured Chinese** in the panel. **Read Chinese after capture** is on by default: recognized Chinese is read aloud once after each capture. Turn it off for button-only speech. The bundled Piper Huayan voice runs on CPU and plays through SteamOS audio. Capture, dismissal, Stop speech and unload stop playback.
 - Stop/unload terminates the worker and capture process group, freeing memory. Suspend stops the session; enable the shortcut after waking.
 - No screenshot history, text history, telemetry, remote fonts, or inference HTTP requests. The capture uses a private temporary PNG, deleted after decoding. Python inference refuses IP socket connections. Only settings are persisted; diagnostics go to Decky's plugin log.
 

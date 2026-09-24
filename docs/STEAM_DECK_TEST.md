@@ -1,6 +1,6 @@
 # Steam Deck acceptance test
 
-The user confirmed 0.5.1 capture and overlay work. The following 0.6.0 checks are pending on a physical Steam Deck. Host tests cannot establish Gamescope capture, Steam overlay rendering, or in-game latency/power impact.
+The user confirmed 0.5.1 capture and overlay work. The following 0.6.1 checks are pending on a physical Steam Deck. Host tests cannot establish Gamescope capture, Steam overlay rendering, or in-game latency/power impact.
 
 ## Install and offline inference
 
@@ -26,7 +26,7 @@ Initial targets (not verified guarantees): pinyin p95 below 500 ms; English p95 
 
 ## GPU OCR comparison
 
-With capture stopped, run the bundled benchmark once with `--ocr-device cpu` and once with `--ocr-device gpu`. Record initialization failures and timings. Enable the shortcut in Auto mode, then hold L5 for 0.2 seconds and check the panel reports OCR (gpu) or an explanatory CPU fallback notice. Repeat the game FPS/power comparison in explicit CPU and GPU modes at the same TDP and settings. Keep the mode that improves subtitle latency without an unacceptable game impact. Pinyin and translation remain on CPU in 0.6.0.
+With capture stopped, run the bundled benchmark once with `--ocr-device cpu` and once with `--ocr-device gpu`. Record initialization failures and timings. Enable the shortcut in Auto mode, then hold L5 for 0.2 seconds and check the panel reports OCR (gpu) or an explanatory CPU fallback notice. Repeat the game FPS/power comparison in explicit CPU and GPU modes at the same TDP and settings. Keep the mode that improves subtitle latency without an unacceptable game impact. Pinyin and translation remain on CPU in 0.6.1.
 
 A capture failure should leave models loaded and allow another hold to retry. The continuous-capture timeout from 0.2.0 should no longer occur while idle.
 
@@ -46,5 +46,5 @@ If capture fails, inspect Decky's plugin log and run `pw-dump` as the Deck user.
 - Test traditional dialogue in Auto and Traditional modes: 銀行的行長喜歡旅行。請打開地圖，尋找附近的村莊。
 - Test label positioning at all four edges and with adjacent lines, both handheld and docked. Check per-line English stays with the correct Chinese line.
 - With Wi-Fi off, tap a line's speaker button and use Speak captured Chinese. Confirm Mandarin is audible through speakers/headphones. Stop speech, L5 dismissal and a new capture should stop it immediately.
-- Enable Read Chinese after capture. It should speak once per capture, not again when English arrives or the panel reopens.
+- Read Chinese after capture is enabled by default. It should speak once per capture, not again when English arrives or the panel reopens. Turning it off should leave speech available through the buttons.
 - Suspend/unload during speech. Confirm no speech worker or pw-play/paplay process remains. Enable the shortcut after waking.
