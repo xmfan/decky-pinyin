@@ -1,0 +1,13 @@
+node_modules/
+.venv/
+.venv-*/
+.research/
+.cache/
+dist/
+build/
+models/
+out/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store

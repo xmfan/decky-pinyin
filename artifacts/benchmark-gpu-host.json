@@ -1,0 +1,32 @@
+{
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "machine": "arm64",
+  "python": "3.11.16",
+  "note": "Host measurements; not proof of Steam Deck latency. Inference sockets blocked. Cache cleared before each run.",
+  "repeats": 5,
+  "threads_per_engine": 2,
+  "initialize_ms": 1095.8,
+  "ocr_device": "gpu",
+  "ocr_notice": "",
+  "timings": {
+    "ocr_ms": {
+      "median": 73.2,
+      "p95": 80.6
+    },
+    "pinyin_ms": {
+      "median": 1.6,
+      "p95": 1.8
+    },
+    "translation_ms": {
+      "median": 65.8,
+      "p95": 76.1
+    },
+    "total_ms": {
+      "median": 145.4,
+      "p95": 146.8
+    }
+  },
+  "text": "你好，欢迎来到这里。\n请打开地图，寻找附近的村庄。",
+  "pinyin": "nǐ hǎo ， huān yíng lái dào zhè lǐ 。 \n qǐng dǎ kāi dì tú ， xún zhǎo fù jìn de cūn zhuāng 。",
+  "translation": "Hello, welcome here. Open the map and find a nearby village."
+}

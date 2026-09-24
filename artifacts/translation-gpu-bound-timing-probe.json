@@ -1,0 +1,25 @@
+{
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "device": "gpu",
+  "initialize_ms": 559.0,
+  "median_ms": 148.1,
+  "samples_ms": [
+    144.51720800207113,
+    146.95300000312272,
+    148.05683399754344,
+    151.17266699962784,
+    148.28791599938995
+  ],
+  "gpu_cache_binding": true,
+  "profiling_enabled": false,
+  "source": [
+    "你好，欢迎来到这里。",
+    "请打开地图，寻找附近的村庄。"
+  ],
+  "translation": [
+    "Hello, welcome here.",
+    "Open the map and find the nearby village."
+  ],
+  "profiles": [],
+  "note": "Experimental FP16 ONNX conversion; not Steam Deck measurements."
+}

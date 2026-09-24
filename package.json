@@ -1,0 +1,31 @@
+{
+  "name": "decky-pinyin",
+  "version": "0.2.0",
+  "description": "Offline live Mandarin pinyin and English subtitles for Steam Deck",
+  "type": "module",
+  "license": "GPL-3.0-only",
+  "scripts": {
+    "build": "rollup -c",
+    "typecheck": "tsc --noEmit",
+    "test": "python3 -m pytest -q",
+    "package": "python3 scripts/package.py"
+  },
+  "devDependencies": {
+    "@decky/rollup": "1.0.2",
+    "@decky/ui": "4.11.0",
+    "@types/react": "18.3.27",
+    "@types/react-dom": "18.3.7",
+    "@types/react-router": "5.1.20",
+    "esbuild": "0.25.12",
+    "playwright": "1.56.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "rollup": "4.53.3",
+    "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "@decky/api": "1.1.3",
+    "react-icons": "5.5.0",
+    "tslib": "2.8.1"
+  }
+}

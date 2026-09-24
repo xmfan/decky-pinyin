@@ -1,0 +1,10 @@
+{
+  "name": "Decky Pinyin",
+  "author": "xmfan",
+  "api_version": 1,
+  "flags": [],
+  "publish": {
+    "tags": ["Language", "Accessibility"],
+    "description": "Local live Chinese OCR, neural pinyin and English translation."
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "onnxruntime": "1.30.0",
+  "webgpu_plugin": "0.4.0",
+  "note": "GPU probe on this host; Steam Deck Vulkan and game impact remain unverified.",
+  "cpu_median_ms": 123.8,
+  "gpu_median_ms": 66.5,
+  "gpu_initialize_ms": 287.8,
+  "profiles": [
+    {
+      "model": "ch_PP-OCRv4_det_infer.onnx",
+      "providers": [
+        "WebGpuExecutionProvider",
+        "CPUExecutionProvider"
+      ],
+      "executed_node_events": {
+        "WebGpuExecutionProvider": 1920
+      },
+      "profile": "/Users/xmfan/projects/decky-pinyin/.cache/webgpu/profiles/ch_PP-OCRv4_det_infer_2026-09-23_21-15-28_943.json"
+    },
+    {
+      "model": "ch_ppocr_mobile_v2.0_cls_infer.onnx",
+      "providers": [
+        "WebGpuExecutionProvider",
+        "CPUExecutionProvider"
+      ],
+      "executed_node_events": {},
+      "profile": "/Users/xmfan/projects/decky-pinyin/.cache/webgpu/profiles/ch_ppocr_mobile_v2.0_cls_infer_2026-09-23_21-15-29_161.json"
+    },
+    {
+      "model": "ch_PP-OCRv4_rec_infer.onnx",
+      "providers": [
+        "WebGpuExecutionProvider",
+        "CPUExecutionProvider"
+      ],
+      "executed_node_events": {
+        "WebGpuExecutionProvider": 2112,
+        "CPUExecutionProvider": 66
+      },
+      "profile": "/Users/xmfan/projects/decky-pinyin/.cache/webgpu/profiles/ch_PP-OCRv4_rec_infer_2026-09-23_21-15-29_180.json"
+    }
+  ],
+  "recognized": [
+    "你好，欢迎来到这里。",
+    "请打开地图，寻找附近的村庄。"
+  ],
+  "gpu_execution_verified": true
+}

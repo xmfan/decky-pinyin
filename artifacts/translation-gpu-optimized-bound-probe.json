@@ -1,0 +1,37 @@
+{
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "device": "gpu",
+  "initialize_ms": 385.5,
+  "median_ms": 120.0,
+  "samples_ms": [
+    119.96962500052177
+  ],
+  "gpu_cache_binding": true,
+  "profiling_enabled": true,
+  "optimized_graph": true,
+  "source": [
+    "你好，欢迎来到这里。",
+    "请打开地图，寻找附近的村庄。"
+  ],
+  "translation": [
+    "Hello, welcome here.",
+    "Open the map and find the nearby village."
+  ],
+  "profiles": [
+    {
+      "profile": "/Users/xmfan/projects/decky-pinyin/.cache/translation-webgpu/gpu-encoder_model_fp16_optimized_2026-09-23_21-32-07_503.json",
+      "executed_node_events": {
+        "CPUExecutionProvider": 206,
+        "WebGpuExecutionProvider": 440
+      }
+    },
+    {
+      "profile": "/Users/xmfan/projects/decky-pinyin/.cache/translation-webgpu/gpu-decoder_model_merged_fp16_optimized_2026-09-23_21-32-07_606.json",
+      "executed_node_events": {
+        "CPUExecutionProvider": 4096,
+        "WebGpuExecutionProvider": 8232
+      }
+    }
+  ],
+  "note": "Experimental FP16 ONNX conversion; not Steam Deck measurements."
+}

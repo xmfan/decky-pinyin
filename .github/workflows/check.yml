@@ -1,0 +1,30 @@
+name: Check and build offline plugin
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: npm ci
+      - run: npm run typecheck && npm run build
+      - run: python -m pip install --no-deps --require-hashes -r requirements-linux.lock
+      - run: python -m pip install pytest==8.4.2 pytest-asyncio==1.2.0
+      - run: python scripts/prepare_models.py
+      - run: python -m pytest -q
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/verify_overlay.mjs
+      - run: python scripts/benchmark.py --output artifacts/benchmark-ci.json
+      - run: python scripts/package.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: decky-pinyin-offline
+          path: out/*

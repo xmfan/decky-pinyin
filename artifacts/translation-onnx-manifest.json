@@ -1,0 +1,38 @@
+{
+  "repository": "Xenova/opus-mt-zh-en",
+  "revision": "39d480d52a9ea3065a1f117adfe4dbc55de10e6f",
+  "files": {
+    "config.json": {
+      "bytes": 1389,
+      "sha256": "293d318fce41dbf04114eac45037bb88a32d7c4ee21011a75e24a8b98ca45ad1"
+    },
+    "generation_config.json": {
+      "bytes": 293,
+      "sha256": "8dc29fef0fe82109f94ef3c2e6ea6bded3215d357b226c34cf7b4630726766c9"
+    },
+    "vocab.json": {
+      "bytes": 1747906,
+      "sha256": "08a119a1defd522fa047cb5e3bfe3e89633e96caa38ced0dc9cee7ef1021a011"
+    },
+    "tokenizer_config.json": {
+      "bytes": 282,
+      "sha256": "08849acc0a539c4749d8665e9d6217735503a97871ccebeea8a762d5fba1acf7"
+    },
+    "source.spm": {
+      "bytes": 804677,
+      "sha256": "e27a3a1b539f4959ec72ea60e453f49156289f95d4e6000b29332efc45616203"
+    },
+    "target.spm": {
+      "bytes": 806530,
+      "sha256": "6a881f4717cd7265f53fea54fd3dc689c767c05338fac7a4590f3088cb2d7855"
+    },
+    "onnx/encoder_model_fp16.onnx": {
+      "bytes": 105062004,
+      "sha256": "82feb1ecc135aad5b07e1aa4fae41479c28e7336af4c8972e015cfe79285e279"
+    },
+    "onnx/decoder_model_merged_fp16.onnx": {
+      "bytes": 118354621,
+      "sha256": "2d0bb108662cbc80d0e34b485045d19e52017a5dfddc190dc7dc752ca6df4a24"
+    }
+  }
+}

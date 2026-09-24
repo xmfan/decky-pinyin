@@ -1,0 +1,30 @@
+{
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "device": "ct2",
+  "initialize_ms": 143.4,
+  "median_ms": 57.2,
+  "samples_ms": [
+    57.73695899915765,
+    55.99520800024038,
+    56.922125000710366,
+    56.14274999970803,
+    56.78720800278825,
+    57.41945799672976,
+    59.629957999277394,
+    58.787458001461346,
+    57.732958000997314,
+    55.788541001675185
+  ],
+  "gpu_cache_binding": false,
+  "profiling_enabled": false,
+  "optimized_graph": false,
+  "source": [
+    "你好，欢迎来到这里。",
+    "请打开地图，寻找附近的村庄。"
+  ],
+  "translation": [
+    "Hello, welcome here. Open the map and find a nearby village."
+  ],
+  "profiles": [],
+  "note": "Shipped int8 CTranslate2 baseline; not Steam Deck measurements."
+}
