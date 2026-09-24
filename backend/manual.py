@@ -56,8 +56,8 @@ class ManualSession:
                 text = await pipeline.process(frame)
                 if request == self.request_id and text:
                     await pipeline.translate(text)
-                message = "Hold L4 to dismiss, then hold again to capture" if pipeline.current["lines"] else "No Chinese text found. Hold L4 to dismiss and try again."
+                message = "Hold L5 to dismiss, then hold again to capture" if pipeline.current["lines"] else "No Chinese text found. Hold L5 to dismiss and try again."
                 await current_emit({"type": "status", "status": "running", "busy": False, "message": message})
             except Exception as exc:
                 await current_emit({"type": "status", "status": "running", "busy": False,
-                                    "message": f"Capture failed: {exc}. Hold L4 to retry."})
+                                    "message": f"Capture failed: {exc}. Hold L5 to retry."})

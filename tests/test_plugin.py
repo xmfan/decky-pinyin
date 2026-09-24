@@ -79,3 +79,29 @@ async def test_direct_capture_starts_worker_without_frontend_ack(plugin_module):
     assert commands == ["capture", "dismiss"] and not plugin.state["busy"]
     assert (await plugin.get_updates(state["version"]))["result"] is None
     await plugin._unload()
+
+@pytest.mark.asyncio
+async def test_disabled_preference_persists_but_pause_preserves_enabled(plugin_module):
+    module, _ = plugin_module
+    plugin = module.Plugin()
+    await plugin._main()
+    assert plugin.settings.enabled and plugin.settings.font_size == 16
+    await plugin.pause()
+    assert plugin.settings.enabled
+    await plugin.stop()
+    other = module.Plugin()
+    await other._main()
+    assert not other.settings.enabled
+
+
+@pytest.mark.asyncio
+async def test_dismiss_stops_speech_process(plugin_module):
+    module, _ = plugin_module
+    plugin = module.Plugin()
+    await plugin._main()
+    process = await asyncio.create_subprocess_exec(sys.executable, "-c", "import time; time.sleep(60)", start_new_session=True)
+    plugin.speech_process = process
+    plugin.state["speech_status"] = "speaking"
+    await plugin.dismiss()
+    assert process.returncode is not None and plugin.speech_process is None
+    assert plugin.state["speech_status"] == "idle"

@@ -2,32 +2,33 @@
 
 A personal Decky plugin for **Chinese text → tone-marked pinyin + English on demand**, entirely on the Steam Deck. Inspired by [Decky-Translator](https://github.com/cat-in-a-box/Decky-Translator).
 
-**Status:** implemented and tested with real local models on a development host. Steam Deck Gaming Mode capture, overlay composition, latency, and game performance still require a physical Deck test. This is an experimental build, not a claim of verified Deck performance.
+**Status:** the user confirmed that 0.5.1 capture and overlay work on their Steam Deck. The 0.6.0 controls, positioned labels, traditional-script handling and speech pass host checks; those additions still need device testing. Deck latency and game performance have not been measured.
 
 ## Install
 
-1. Copy `out/Decky-Pinyin-0.5.1-offline.zip` to your Steam Deck.
+1. Copy `out/Decky-Pinyin-0.6.0-offline.zip` to your Steam Deck.
 2. In Decky settings, enable Developer Mode. Open Developer → Install Plugin from ZIP and select the file.
 3. Launch a game in Gaming Mode and open **Decky Pinyin**.
-4. Disable the original Decky Translator shortcut if it also uses L4. Press **Enable L4 shortcut**; allow the local models to load.
-5. Close the menu and **hold L4 for 1 second** to capture. **Hold L4 for 0.5 seconds** to dismiss, then hold it again for the next capture. A progress indicator shows activation.
-6. The panel also has **Capture now** and **Dismiss overlay** buttons. Disable the shortcut to unload the models. Settings changes disable it; enable it again afterward.
+4. The **L5 shortcut is enabled by default**; allow the local models to load. Disable any other plugin shortcut using L5.
+5. Close the menu and **hold L5 for 0.2 seconds** to capture. **Hold L5 for 0.2 seconds** to dismiss, then hold it again for the next capture. A progress indicator shows activation.
+6. The panel also has **Capture now** and **Dismiss overlay** buttons. Disable the shortcut to unload the models. Settings changes restart models when enabled. Disabling the shortcut is remembered across reloads.
 
-Download the actual `Decky-Pinyin-0.5.1-offline.zip` release asset. If downloading the Actions artifact named `decky-pinyin-offline.zip`, extract that wrapper once and install the inner versioned offline ZIP.
+Download the actual `Decky-Pinyin-0.6.0-offline.zip` release asset. If downloading the Actions artifact named `decky-pinyin-offline.zip`, extract that wrapper once and install the inner versioned offline ZIP.
 
-The ZIP includes Python, dependencies, OCR weights, the neural pinyin model, and the translation model. **No model setup, API keys, network connection, or system Python changes are needed on the Deck.** Building the ZIP on a developer machine requires downloads once. Existing Decky Loader and SteamOS PipeWire/GStreamer components are required. Desktop Mode is not currently supported.
+The ZIP includes Python, dependencies, OCR weights, the neural pinyin model, the translation model, and an offline Mandarin voice. **No model setup, API keys, network connection, or system Python changes are needed on the Deck.** Building the ZIP on a developer machine requires downloads once. Existing Decky Loader and SteamOS PipeWire/GStreamer components are required. Desktop Mode is not currently supported.
 
-Capture and L4 handling are ported from Decky-Translator; see [upstream port details](docs/UPSTREAM_PORT.md). OCR, pinyin and translation use our bundled local models.
+Capture and controller handling are ported from Decky-Translator; see [upstream port details](docs/UPSTREAM_PORT.md). OCR, pinyin and translation use our bundled local models.
 
 ## Behavior
 
-- Simplified and traditional Chinese, with original characters preserved under pinyin.
+- Simplified and traditional Chinese. Auto mode infers the script from OCR and normalizes mixed results. Choose Traditional or Simplified explicitly if needed. Tone-marked pinyin stays aligned with the displayed characters.
 - g2pM's small local neural model uses sentence context for polyphones; pypinyin corrects known multi-character phrases and formats tones. Proper names and ambiguous dialogue can still be wrong.
 - PP-OCRv4 mobile detection/recognition with experimental native WebGPU acceleration (Vulkan on Linux). Default Auto mode attempts GPU and reports CPU fallback if unavailable; explicit GPU and CPU modes are also available. Unsupported GPU operations can still use CPU kernels; horizontal Chinese text is the intended input. Stylized fonts, vertical text, motion blur, and very small glyphs may be missed.
 - OPUS-MT Chinese-to-English, converted to int8 CTranslate2, with greedy decoding for speed. Translation quality is limited by this compact model and OCR quality. English is the current target language.
 - Pinyin appears before translation. Old translations never replace newer dialogue.
-- Every activation captures the full screen. The old overlay and Quick Access menu are hidden first, with a brief settling delay before capture to avoid reading our own text. There are no capture-region options. The captured screenshot appears first; local pinyin/English results appear at the top.
+- Every activation captures the full screen. The old overlay and Quick Access menu are hidden first, with a brief settling delay before capture to avoid reading our own text. There are no capture-region options. The captured screenshot appears first; each pinyin/English label appears near the corresponding original text, with collision handling and screen-edge clamping. Default text size is 16 px, the slider minimum.
 - Models remain loaded while enabled. Each request opens a short PipeWire capture, preferring a PNG snapshot with raw RGB fallback. Dismissed or superseded results cannot reappear. Requests are serialized; the overlay stays until dismissed or replaced.
+- Tap **🔊** on a label to hear that line in Mandarin, or use **Speak captured Chinese** in the panel. **Read Chinese after capture** enables automatic speech (off by default). The bundled Piper Huayan voice runs on CPU and plays through SteamOS audio. Capture, dismissal, Stop speech and unload stop playback.
 - Stop/unload terminates the worker and capture process group, freeing memory. Suspend stops the session; enable the shortcut after waking.
 - No screenshot history, text history, telemetry, remote fonts, or inference HTTP requests. The capture uses a private temporary PNG, deleted after decoding. Python inference refuses IP socket connections. Only settings are persisted; diagnostics go to Decky's plugin log.
 
@@ -56,7 +57,7 @@ Files:
 
 - `src/`: Decky panel, global ruby-text overlay, event state.
 - `main.py`: Decky RPC and worker lifecycle; standard library only.
-- `backend/`: manual PipeWire capture, L4 input, bounded pipeline, local model adapters.
+- `backend/`: manual PipeWire capture, L5 input, bounded pipeline, local model adapters and speech.
 - `scripts/`: build-time model preparation, offline packaging, real inference benchmark.
 - `tests/`: queue behavior, stale results, shutdown, configuration, and pronunciation checks.
 - `docs/STEAM_DECK_TEST.md`: physical-device acceptance procedure and outstanding checks.

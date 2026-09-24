@@ -55,3 +55,11 @@ The user reported that both L4 and Capture now did nothing in 0.4.0 and requeste
 ## Cleanup (0.5.1)
 
 Removed unused continuous-inference machinery: sampling interval, change detector, live stream loop, background translation queue, skipped-frame counters and stale frontend timestamp. ManualSession alone owns request serialization and dismissal; Pipeline now handles one screenshot's OCR/pinyin followed by optional translation. Obsolete streaming tests were replaced with manual inference checks. 32 Python tests, TypeScript/build and the browser interaction check passed locally. Capture/input behavior and local models are unchanged from 0.5.0.
+
+## Short L5, positioned reading and speech (0.6.0)
+
+The user confirmed 0.5.1 works on the Steam Deck. 0.6.0 uses 200 ms holds for L5 capture/dismiss, starts enabled on plugin load, remembers explicit disabling and defaults text to 16 px. Auto/Traditional/Simplified script modes normalize OCR output before pinyin/translation. Real OCR of the traditional fixture initially mixed 尋找 with 寻找; Auto normalization produces the expected traditional line. Detected rectangles now place each Chinese/pinyin/English label near its source.
+
+Offline Piper 1.4.2 and the pinned Huayan medium voice provide Mandarin speech, triggered per line, from the panel, or automatically when enabled. A real offline synthesis test checks valid non-silent 22,050 Hz mono audio. Speech uses a separate process group and is stopped by capture, dismissal, explicit Stop, disable or unload. Browser tests cover short L5 holds, early release, L4 inactivity, default enable/remembered disable, speech button dispatch, adjacent labels, screen bounds and docked layout. Linux CI additionally exercises the packaged voice and native player with a PipeWire null sink. Physical playback and the new interactions still need a Deck test.
+
+38 Python tests pass locally, along with TypeScript checking, the production build and browser interaction checks. Both old and new PipeWire player argument formats are covered.

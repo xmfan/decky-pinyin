@@ -1,4 +1,9 @@
+export interface Rect { left: number; top: number; right: number; bottom: number; }
+
 export interface Settings {
+  enabled: boolean;
+  chinese_script: "auto" | "traditional" | "simplified";
+  tts_auto: boolean;
   translation: boolean;
   tone_style: "marks" | "numbers" | "none";
   font_size: number;
@@ -9,7 +14,10 @@ export interface Settings {
 
 export interface Result {
   revision: number;
-  lines: { text: string; confidence: number; tokens: { text: string; pinyin: string }[] }[];
+  width: number;
+  height: number;
+  request_id?: number;
+  lines: { text: string; confidence: number; translation: string; rect: Rect; tokens: { text: string; pinyin: string }[] }[];
   translation: string;
   translating: boolean;
   translation_error?: string;
@@ -31,4 +39,6 @@ export interface State {
   busy?: boolean;
   screenshot?: string | null;
   input_status?: string;
+  speech_status?: "idle" | "generating" | "speaking" | "error";
+  speech_error?: string;
 }

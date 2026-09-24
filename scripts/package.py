@@ -23,7 +23,7 @@ def digest(path):
 def main():
     if sys.version_info < (3, 11):
         raise SystemExit("Use Python 3.11+ to build the package")
-    for name in ("dist/index.js", "models/zh-en/manifest.json"):
+    for name in ("dist/index.js", "models/zh-en/manifest.json", "models/tts/manifest.json"):
         if not (ROOT / name).is_file():
             raise SystemExit(f"Missing {name}; run npm run build and scripts/prepare_models.py first")
     cache = ROOT / ".cache"

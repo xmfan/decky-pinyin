@@ -20,3 +20,7 @@ Source: [cat-in-a-box/Decky-Translator](https://github.com/cat-in-a-box/Decky-Tr
 ## Verification limits
 
 Copied controller initialization/report tests, snapshot command/retry/cleanup tests, worker/model tests and browser hold/capture/dismiss tests run locally. Linux CI runs the exact snapshot pipeline against a synthetic PipeWire video source. Only a physical Deck test can establish controller access, Gamescope capture and Steam composition on the user's system. The previous 0.4.0 build produced no visible capture for the user; that failure is not considered resolved on hardware until this version is tested.
+
+## 0.6.0 adaptations after successful device capture
+
+The user confirmed 0.5.1 works on their Deck. Capture remains unchanged. Input is now configured for L5 with 200 ms activation/dismissal and 50 ms polling/cooldown. L5 release resets pressed state even within cooldown so quick repeated holds are not swallowed. Labels use OCR rectangles and per-line translation. Offline Piper speech is a separate, cancellable process; it does not change the screenshot path.

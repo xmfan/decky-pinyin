@@ -86,3 +86,22 @@ async def test_ocr_receives_entire_frame_including_all_four_corners():
     pipeline = Pipeline(Settings(), FullScreenOcr(), Pinyin(), None, emit)
     await pipeline.process(Frame(image, time.monotonic(), 1))
     np.testing.assert_array_equal(received[0], image)
+
+@pytest.mark.asyncio
+async def test_traditional_script_and_rectangles_survive_real_ocr():
+    from PIL import Image
+    from pathlib import Path
+    from backend.engines import OcrEngine, PinyinEngine
+    settings = Settings(ocr_device="cpu")
+    image = np.asarray(Image.open(Path(__file__).parents[1] / "artifacts/ocr-traditional-fixture.png").convert("RGB"))
+    events = []
+    async def emit(event):
+        events.append(event)
+    pipeline = Pipeline(settings, OcrEngine(settings), PinyinEngine(), None, emit)
+    await pipeline.process(Frame(image, time.monotonic(), 1))
+    lines = events[-1]["lines"]
+    assert lines[0]["text"] == "銀行的行長喜歡旅行。"
+    assert lines[1]["text"] == "請打開地圖，尋找附近的村莊。"
+    assert lines[0]["tokens"][1]["pinyin"] == "háng"
+    assert .7 < lines[0]["rect"]["top"] < .8
+    assert events[-1]["width"] == 1280 and events[-1]["height"] == 800

@@ -1,0 +1,138 @@
+{
+  "type": "result",
+  "revision": 1,
+  "width": 1280,
+  "height": 800,
+  "lines": [
+    {
+      "text": "你好，欢迎来到这里。",
+      "tokens": [
+        {
+          "text": "你",
+          "pinyin": "nǐ"
+        },
+        {
+          "text": "好",
+          "pinyin": "hǎo"
+        },
+        {
+          "text": "，",
+          "pinyin": ""
+        },
+        {
+          "text": "欢",
+          "pinyin": "huān"
+        },
+        {
+          "text": "迎",
+          "pinyin": "yíng"
+        },
+        {
+          "text": "来",
+          "pinyin": "lái"
+        },
+        {
+          "text": "到",
+          "pinyin": "dào"
+        },
+        {
+          "text": "这",
+          "pinyin": "zhè"
+        },
+        {
+          "text": "里",
+          "pinyin": "lǐ"
+        },
+        {
+          "text": "。",
+          "pinyin": ""
+        }
+      ],
+      "confidence": 0.946,
+      "rect": {
+        "left": 0.1265625,
+        "top": 0.80125,
+        "right": 0.3671875,
+        "bottom": 0.8425
+      },
+      "translation": "Hello, welcome here."
+    },
+    {
+      "text": "请打开地图，寻找附近的村庄。",
+      "tokens": [
+        {
+          "text": "请",
+          "pinyin": "qǐng"
+        },
+        {
+          "text": "打",
+          "pinyin": "dǎ"
+        },
+        {
+          "text": "开",
+          "pinyin": "kāi"
+        },
+        {
+          "text": "地",
+          "pinyin": "dì"
+        },
+        {
+          "text": "图",
+          "pinyin": "tú"
+        },
+        {
+          "text": "，",
+          "pinyin": ""
+        },
+        {
+          "text": "寻",
+          "pinyin": "xún"
+        },
+        {
+          "text": "找",
+          "pinyin": "zhǎo"
+        },
+        {
+          "text": "附",
+          "pinyin": "fù"
+        },
+        {
+          "text": "近",
+          "pinyin": "jìn"
+        },
+        {
+          "text": "的",
+          "pinyin": "de"
+        },
+        {
+          "text": "村",
+          "pinyin": "cūn"
+        },
+        {
+          "text": "庄",
+          "pinyin": "zhuāng"
+        },
+        {
+          "text": "。",
+          "pinyin": ""
+        }
+      ],
+      "confidence": 0.942,
+      "rect": {
+        "left": 0.12578125,
+        "top": 0.87375,
+        "right": 0.4671875,
+        "bottom": 0.915
+      },
+      "translation": "Open the map and find a nearby village."
+    }
+  ],
+  "translation": "Hello, welcome here.\nOpen the map and find a nearby village.",
+  "translating": false,
+  "ocr_ms": 268.2,
+  "pinyin_ms": 105.6,
+  "translation_ms": 219.3,
+  "age_ms": 389,
+  "ocr_device": "cpu",
+  "ocr_notice": ""
+}

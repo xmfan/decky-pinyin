@@ -18,6 +18,8 @@ def sha256(path):
 
 
 def main():
+    from prepare_speech import main as prepare_speech
+    prepare_speech()
     from ctranslate2.converters import OpusMTConverter
     cache = ROOT / ".cache"
     cache.mkdir(exist_ok=True)

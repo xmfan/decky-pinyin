@@ -23,3 +23,5 @@ sympy==1.14.0 --hash=sha256:e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb
 tqdm==4.70.1 --hash=sha256:c293e525e6fef9c20e8728fd4612df02a0aa31bb5fe91ecd93e123b1b7bffa73
 onnxruntime==1.30.0 --hash=sha256:fd54b314ea385bcecac69ab431f020ba503e3878dad4ebb645fec5a24b041242
 onnxruntime-ep-webgpu==0.4.0 --hash=sha256:5d8c961eda91a88961cad1fb7621f389f006b18497d6ea9ecf96f729f066cbfb
+piper-tts==1.4.2 --hash=sha256:b17184a664bd9431ce95c138f4bfb3025e1280cf26075a703dbfdcab989b8ee3
+pathvalidate==3.3.1 --hash=sha256:5263baab691f8e1af96092fa5137ee17df5bdfbd6cff1fcac4d6ef4bc2e1735f

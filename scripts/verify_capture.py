@@ -59,6 +59,24 @@ async def main():
                       "seconds": round(time.monotonic() - start, 2), "shape": [800, 1280, 3],
                       "manual_png_and_rgb_verified": True}
             print(json.dumps(report, indent=2), flush=True)
+            # Verify the packaged Mandarin voice and native player against a
+            # synthetic audio sink; physical speakers still need a Deck test.
+            sink = await asyncio.create_subprocess_exec("pw-cli", "create-node", "adapter",
+                "{ factory.name = support.null-audio-sink node.name = pinyin-test-audio media.class = Audio/Sink audio.position = [ FL FR ] object.linger = true }",
+                stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            _, sink_error = await sink.communicate()
+            assert sink.returncode == 0, sink_error.decode()
+            await asyncio.sleep(.5)
+            voice = Path(sys.executable).resolve().parents[2] / "models/tts"
+            speech = await asyncio.create_subprocess_exec(sys.executable, "backend/speech.py", "--models", str(voice),
+                stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+            try:
+                audio_out, audio_error = await asyncio.wait_for(speech.communicate("銀行的行長喜歡旅行。".encode()), 30)
+                assert speech.returncode == 0, audio_error.decode() + audio_out.decode()
+                assert '"status": "speaking"' in audio_out.decode() and '"status": "idle"' in audio_out.decode()
+                print("Packaged offline Mandarin speech and PipeWire null-sink playback verified", flush=True)
+            finally:
+                await terminate(speech)
         finally:
             if provider:
                 await terminate(provider)

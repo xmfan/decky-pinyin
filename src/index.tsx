@@ -39,22 +39,31 @@ function Panel({ store, controller }: { store: Store; controller: Controller }) 
         const next = await (running ? rpc.stop() : rpc.start());
         if (!running && next.status !== "error") Navigation.CloseSideMenus();
         return next;
-      })}>{running ? "Disable L4 shortcut" : "Enable L4 shortcut"}</ButtonItem></PanelSectionRow>
+      })}>{running ? "Disable L5 shortcut" : "Enable L5 shortcut"}</ButtonItem></PanelSectionRow>
       {state.status === "running" && <>
         <PanelSectionRow><ButtonItem disabled={busy} layout="below" onClick={() => void action(controller.capture)}>{state.busy ? "Capture latest screen" : "Capture now"}</ButtonItem></PanelSectionRow>
         <PanelSectionRow><ButtonItem disabled={busy} layout="below" onClick={() => void action(controller.dismiss)}>Dismiss overlay</ButtonItem></PanelSectionRow>
       </>}
       <PanelSectionRow><div style={{ fontSize: 12, lineHeight: 1.5, color: "#a7b7c6" }}>
-        Hold L4 for 1 second to capture the full screen. Hold L4 for 0.5 seconds to dismiss the screenshot and results. Results stay visible until dismissed or replaced. Models stay loaded while enabled. Settings changes disable the shortcut; enable it again afterward.
+        Hold L5 for 0.2 seconds to capture or dismiss. Results stay visible until dismissed or replaced. Models stay loaded while enabled. Enabled by default. Settings changes restart the local models automatically.
       </div></PanelSectionRow>
     </PanelSection>
     <PanelSection title="Display">
+      <PanelSectionRow><DropdownItem label="Chinese script" selectedOption={state.settings.chinese_script} disabled={busy}
+        rgOptions={[{ data: "auto", label: "Auto · match detected script" }, { data: "traditional", label: "Traditional · 繁體中文" }, { data: "simplified", label: "Simplified · 简体中文" }]}
+        onChange={(option) => save("chinese_script", option.data)} /></PanelSectionRow>
       <PanelSectionRow><ToggleField label="English translation" checked={state.settings.translation} disabled={busy} onChange={(value) => save("translation", value)} /></PanelSectionRow>
       <PanelSectionRow><DropdownItem label="Pinyin tones" selectedOption={state.settings.tone_style} disabled={busy}
         rgOptions={[{ data: "marks", label: "Tone marks · nǐ hǎo" }, { data: "numbers", label: "Numbers · ni3 hao3" }, { data: "none", label: "No tones · ni hao" }]}
         onChange={(option) => save("tone_style", option.data)} /></PanelSectionRow>
       <PanelSectionRow><SliderField label="Text size" value={state.settings.font_size} min={16} max={32} step={2} disabled={busy}
         onChange={(value) => save("font_size", value)} /></PanelSectionRow>
+    </PanelSection>
+    <PanelSection title="Speech">
+      <PanelSectionRow><ToggleField label="Read Chinese after capture" checked={state.settings.tts_auto} disabled={busy} onChange={(value) => save("tts_auto", value)} /></PanelSectionRow>
+      <PanelSectionRow><ButtonItem disabled={busy || !state.result?.lines.length} layout="below" onClick={() => void action(() => rpc.speak(-1))}>Speak captured Chinese</ButtonItem></PanelSectionRow>
+      {(state.speech_status === "generating" || state.speech_status === "speaking") && <PanelSectionRow><ButtonItem layout="below" onClick={() => void action(rpc.stopSpeech)}>Stop speech</ButtonItem></PanelSectionRow>}
+      <PanelSectionRow><div style={{ fontSize: 12 }}>Offline Mandarin voice. Tap 🔊 beside a line to read it.{state.speech_error && <p>{state.speech_error}</p>}</div></PanelSectionRow>
     </PanelSection>
     <PanelSection title="Performance">
       <PanelSectionRow><DropdownItem label="OCR processor" selectedOption={state.settings.ocr_device} disabled={busy}
@@ -84,7 +93,7 @@ export default definePlugin(() => {
       forDismiss={progress.forDismiss} text={progress.forDismiss ? "Dismiss" : "Capture"} />;
   });
   const steam = (window as unknown as { SteamClient?: { User?: { RegisterForPrepareForSystemSuspendProgress?: (fn: () => void) => { unregister: () => void } } } }).SteamClient;
-  const suspend = steam?.User?.RegisterForPrepareForSystemSuspendProgress?.(() => { void rpc.stop().then(store.update).catch(console.error); });
+  const suspend = steam?.User?.RegisterForPrepareForSystemSuspendProgress?.(() => { void rpc.pause().then(store.update).catch(console.error); });
   return {
     name: "Decky Pinyin",
     titleView: <div className={staticClasses.Title}>Decky Pinyin</div>,
@@ -97,7 +106,7 @@ export default definePlugin(() => {
       suspend?.unregister();
       routerHook.removeGlobalComponent("DeckyPinyinOverlay");
       routerHook.removeGlobalComponent("DeckyPinyinActivation");
-      void rpc.stop().catch(console.error);
+      void rpc.pause().catch(console.error);
     },
   };
 });

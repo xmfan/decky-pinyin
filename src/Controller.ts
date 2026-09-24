@@ -12,6 +12,8 @@ export class Controller {
   private run = 0;
   private capturing = false;
   private enabled = false;
+  private initialized = false;
+  private spoken = "";
   private closed = false;
   private lastError = "";
   private polling = false;
@@ -20,9 +22,9 @@ export class Controller {
 
   constructor(readonly store: Store) {
     this.input.setEnabled(false);
-    this.input.setInputMode(InputMode.L4_BUTTON);
-    this.input.setTranslateHoldTime(1000);
-    this.input.setDismissHoldTime(500);
+    this.input.setInputMode(InputMode.L5_BUTTON);
+    this.input.setTranslateHoldTime(200);
+    this.input.setDismissHoldTime(200);
     this.input.onProgress((progress) => {
       this.progress = progress;
       this.progressListeners.forEach((fn) => fn());
@@ -41,6 +43,12 @@ export class Controller {
       const error = state && (state.status === "error" || state.message.startsWith("Capture failed:")) ? state.message : "";
       if (error && error !== this.lastError) this.report(error);
       this.lastError = error;
+      const result = state?.result;
+      const key = result ? `${result.request_id}:${result.revision}` : "";
+      if (state?.settings.tts_auto && result?.lines.length && key !== this.spoken) {
+        this.spoken = key;
+        void rpc.speak(-1).then(store.update).catch(this.report);
+      }
     });
     // Upstream uses backend RPC polling. Keep UI state current even if a Decky
     // event is missed while the Quick Access panel is closed.
@@ -56,7 +64,17 @@ export class Controller {
   private async refresh() {
     if (this.polling || this.closed) return;
     this.polling = true;
-    try { const state = await rpc.updates(this.store.snapshot()?.version ?? -1); if (state && !this.closed) this.store.update(state); }
+    try {
+      const state = await rpc.updates(this.store.snapshot()?.version ?? -1);
+      if (state && !this.closed) this.store.update(state);
+      if (!this.initialized && state) {
+        this.initialized = true;
+        if (state.settings.enabled && state.installed && state.status === "stopped" && !this.closed) {
+          const started = await rpc.start();
+          if (!this.closed) this.store.update(started);
+        }
+      }
+    }
     catch (error) { console.warn("Decky Pinyin state", error); }
     finally { this.polling = false; }
   }

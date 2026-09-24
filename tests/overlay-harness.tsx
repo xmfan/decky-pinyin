@@ -3,15 +3,13 @@ import { Overlay } from "../src/Overlay";
 import { Controller } from "../src/Controller";
 import { Store } from "../src/store";
 import type { State } from "../src/types";
+import fixture from "../artifacts/overlay-fixture.json";
 
-const text = "你好，欢迎来到这里。请打开地图，寻找附近的村庄。";
-const pinyin = "nǐ hǎo _ huān yíng lái dào zhè lǐ _ qǐng dǎ kāi dì tú _ xún zhǎo fù jìn de cūn zhuāng _".split(" ");
 const state: State = {
   version: 1,
-  status: "running", message: "Local", installed: true,
-  settings: { translation: true, tone_style: "marks", font_size: 22, confidence: .65, threads: 2, ocr_device: "auto" },
-  result: { revision: 1, lines: [{ text, confidence: .98, tokens: [...text].map((char, i) => ({ text: char, pinyin: pinyin[i] === "_" ? "" : pinyin[i] })) }],
-    translation: "Hello, welcome here. Open the map and find a nearby village.", translating: false, ocr_ms: 122, pinyin_ms: 2, translation_ms: 54, age_ms: 180, ocr_device: "cpu", ocr_notice: "" },
+  status: "running", message: "Local", installed: true, screenshot: "../artifacts/ocr-fixture.png",
+  settings: { enabled: true, chinese_script: "auto", tts_auto: false, translation: true, tone_style: "marks", font_size: 16, confidence: .65, threads: 2, ocr_device: "auto" },
+  result: fixture,
 };
 const store = new Store();
 store.update(state);
@@ -24,9 +22,13 @@ store.update(state);
 let controller: Controller | null = null;
 let backendState: State = state;
 let buttons: string[] = [];
+let starts = 0;
+const speechRequests: number[] = [];
 const captures: { overlayVisible: boolean; menuClosed: boolean }[] = [];
 (window as any).testRpc = async (name: string, ...args: unknown[]) => {
   if (name === "get_hidraw_button_state") return { success: true, buttons };
+  if (name === "start") { starts++; backendState = { ...backendState, version: backendState.version + 1, status: "running" }; }
+  if (name === "speak") speechRequests.push(args[0] as number);
   if (name === "get_updates") return args[0] === backendState.version ? null : backendState;
   if (name === "dismiss") backendState = { ...backendState, version: backendState.version + 1, result: null, screenshot: null, busy: false };
   if (name === "capture") {
@@ -41,12 +43,25 @@ Object.assign((window as any).preview, {
     controller = new Controller(store);
     store.update(backendState);
   },
-  press: () => { buttons = ["L4"]; },
+  press: () => { buttons = ["L5"]; },
   release: () => { buttons = []; },
   captures: () => captures,
+  l4: () => { buttons = ["L4"]; },
+  startDisabled: () => { backendState = { ...backendState, version: backendState.version + 1, status: "stopped", result: null, settings: { ...backendState.settings, enabled: false } }; },
+  startEnabled: () => { backendState = { ...backendState, version: backendState.version + 1, status: "stopped", result: null, settings: { ...backendState.settings, enabled: true } }; },
+  tradition: () => store.update({ ...state, result: { ...state.result!, lines: [{ ...state.result!.lines[0], text: "銀行的行長喜歡旅行。", tokens: [..."銀行的行長喜歡旅行。"].map((text) => ({text, pinyin: "háng"})) }] } }),
+  multi: () => store.update({ ...state, result: { ...state.result!, lines: [
+    { ...state.result!.lines[0], rect: { left: .02, top: .02, right: .43, bottom: .07 } },
+    { ...state.result!.lines[0], rect: { left: .52, top: .72, right: .98, bottom: .79 } },
+    { ...state.result!.lines[0], rect: { left: .52, top: .81, right: .98, bottom: .88 } },
+  ] } }),
   capture: () => { void controller!.capture(); },
   dismiss: () => { void controller!.dismiss(); },
   finish: () => { backendState = { ...backendState, version: backendState.version + 1, result: state.result, busy: false }; },
   closeController: () => controller!.close(),
+  makeController: () => { controller = new Controller(store); },
+  starts: () => starts,
+  speechRequests: () => speechRequests,
+  autoSpeech: () => { backendState = { ...backendState, version: backendState.version + 1, settings: { ...backendState.settings, tts_auto: true } }; },
 });
 createRoot(document.getElementById("root")!).render(<Overlay store={store} />);

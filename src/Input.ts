@@ -96,7 +96,7 @@ export class Input {
     private touchStartTime: number | null = null;
 
     private pollingInterval: ReturnType<typeof setInterval> | null = null;
-    private pollingRate = 100; // 10Hz polling
+    private pollingRate = 50; // 20Hz for the 200 ms L5 hold
 
     // Health tracking
     private lastInputTime: number = 0;
@@ -113,7 +113,7 @@ export class Input {
     private inCooldown = false;
     private lastActionTime = 0;
     private clearCooldownTimeoutId: ReturnType<typeof setTimeout> | null = null;
-    private cooldownDuration = 150; // 0.15s cooldown
+    private cooldownDuration = 50; // one input poll for short holds
 
     private inputMode: InputMode = InputMode.L5_BUTTON;
 
@@ -463,6 +463,14 @@ export class Input {
     }
 
     private OnButtonsPressed(buttons: Button[]): void {
+        // A short L5 hold can be released inside the cooldown. Always clear
+        // its pressed state so the next hold is not swallowed.
+        if (this.inputMode === InputMode.L5_BUTTON && !buttons.includes(Button.L5)) {
+            this.stopProgressAnimation();
+            this.waitingForRelease = false;
+            this.leftTouchpadTouched = this.rightTouchpadTouched = false;
+            return;
+        }
         logger.debug('Input', `OnButtonsPressed: buttons=[${buttons.join(',')}], mode=${InputMode[this.inputMode]}, waiting=${this.waitingForRelease}, cooldown=${this.inCooldown}`);
 
         if (!this.enabled) {

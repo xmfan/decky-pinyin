@@ -27,6 +27,9 @@ def test_copied_controller_initialization_and_l4_report(monkeypatch):
     packet[13] = 0
     monitor._process_packet(packet)
     assert monitor.get_button_state() == []
+    packet[9] = 0x80
+    monitor._process_packet(packet)
+    assert monitor.get_button_state() == ["L5"]
 
 
 @pytest.mark.asyncio

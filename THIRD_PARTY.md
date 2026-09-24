@@ -15,6 +15,9 @@ Decky Pinyin's source is GPL-3.0-only. Bundled dependencies and model weights re
 | SentencePiece | https://github.com/google/sentencepiece | Apache-2.0; translation tokenization |
 | ONNX Runtime | https://github.com/microsoft/onnxruntime | MIT; OCR inference |
 | ONNX Runtime WebGPU EP / Dawn | https://github.com/microsoft/onnxruntime / https://dawn.googlesource.com/dawn | MIT / BSD-3-Clause and bundled third-party notices; GPU-assisted OCR |
+| Piper 1.4.2 / espeak-ng | https://github.com/OHF-Voice/piper1-gpl | GPL-3.0; offline speech engine and bundled phonemizer data; licenses included in wheel metadata |
+| Piper Huayan Mandarin medium voice | https://huggingface.co/rhasspy/piper-voices/tree/c10ece1aade47bb51c153c893d14e5bf8e5b7117/zh/zh_CN/huayan/medium | Upstream model card lists dataset license as Unknown; unmodified weights, pinned revision/checksums and original MODEL_CARD included under models/tts |
+| pathvalidate | https://github.com/thombashi/pathvalidate | MIT; Piper dependency |
 | Python standalone | https://github.com/astral-sh/python-build-standalone | PSF-2.0 plus dependency licenses; CPython 3.11.15 portable Linux runtime |
 | NumPy / OpenCV / Pillow / Shapely | PyPI wheel metadata in `vendor` | Their respective BSD / Apache / MIT-CMU / BSD licenses |
 
