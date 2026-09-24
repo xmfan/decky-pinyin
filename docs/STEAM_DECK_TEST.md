@@ -1,6 +1,6 @@
 # Steam Deck acceptance test
 
-The user confirmed 0.5.1 capture and overlay work. The following 0.7.0 checks are pending on a physical Steam Deck. Host tests cannot establish Gamescope capture, Steam overlay rendering, or in-game latency/power impact.
+The user confirmed 0.5.1 capture and overlay work. The following 0.7.1 checks are pending on a physical Steam Deck. Host tests cannot establish Gamescope capture, Steam overlay rendering, or in-game latency/power impact.
 
 ## Install and offline inference
 
@@ -49,5 +49,5 @@ If capture fails, inspect Decky's plugin log and run `pw-dump` as the Deck user.
 - Read Chinese after capture is enabled by default. It should speak once per capture, not again when English arrives or the panel reopens. Turning it off should leave speech available through the buttons.
 - Suspend/unload during speech. Confirm no speech worker or pw-play/paplay process remains. Enable the shortcut after waking.
 
-- Verify narrow OCR boxes still produce wide labels; pinyin syllables and label cards must not overlap. Dense captures should allow scrolling through every line.
+- Verify narrow OCR boxes still produce wide labels; pinyin syllables and label cards must not overlap. Dense captures should expose Previous/Next buttons, keep each page nonempty and make every line reachable. No scrolling-list message should appear.
 - Confirm the game remains visible through light dimming; no captured screenshot or opaque full-screen background should cover it.

@@ -33,7 +33,7 @@ const captures: { overlayVisible: boolean; menuClosed: boolean; script: unknown 
   if (name === "get_updates") return args[0] === backendState.version ? null : backendState;
   if (name === "dismiss") backendState = { ...backendState, version: backendState.version + 1, result: null, screenshot: null, busy: false };
   if (name === "capture") {
-    captures.push({ overlayVisible: !!document.querySelector("ruby"), menuClosed: (window as any).menuClosed, script: args[0] });
+    captures.push({ overlayVisible: !!document.querySelector("[data-pinyin-overlay-host]")?.shadowRoot?.querySelector("[data-reading-label]"), menuClosed: (window as any).menuClosed, script: args[0] });
     backendState = { ...backendState, version: backendState.version + 1, result: null, screenshot: "../artifacts/ocr-fixture.png", busy: true, message: "Recognizing Chinese locally…" };
   }
   return backendState;

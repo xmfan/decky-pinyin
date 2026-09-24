@@ -37,7 +37,7 @@ try {
     return bounds;
   };
   await checkBounds();
-  const rubyBoxes = await page.locator("rt").evaluateAll(els => els.map(el => { const b=el.getBoundingClientRect(); return {left:b.left,right:b.right,top:b.top,bottom:b.bottom}; }));
+  const rubyBoxes = await page.locator("[data-reading-label] rt").evaluateAll(els => els.map(el => { const b=el.getBoundingClientRect(); return {left:b.left,right:b.right,top:b.top,bottom:b.bottom}; }));
   for(let i=0;i<rubyBoxes.length;i++) for(let j=i+1;j<rubyBoxes.length;j++) {
     const a=rubyBoxes[i], b=rubyBoxes[j];
     assert(a.right<=b.left || b.right<=a.left || a.bottom<=b.top || b.bottom<=a.top, "Pinyin syllables overlap");
@@ -52,19 +52,48 @@ try {
   await page.screenshot({ path: path.join(root, "artifacts/overlay-preview.png") });
   assert.equal(await page.locator("#root img").count(), 0, "No full-screen captured image is rendered");
   assert.equal(await page.locator("[data-game-dimmer]").evaluate(el => getComputedStyle(el).backgroundColor), "rgba(0, 0, 0, 0.12)");
+  // Model the clipping and global styles a host application can impose.
+  await page.evaluate(() => {
+    const root=document.getElementById("root");
+    root.style.cssText="position:relative;transform:translate(100px,100px);width:200px;height:1px;overflow:hidden;clip-path:inset(0)";
+    const css=document.createElement("style");css.id="host-css";
+    css.textContent="ruby, rt, [aria-live], [data-reading-label] { visibility:hidden !important; width:1px !important; max-height:1px !important; overflow:hidden !important; }";
+    document.head.append(css);
+  });
+  await page.waitForTimeout(100);
+  await checkBounds();
+  const painted = await page.locator("[data-reading-label]").first().evaluate(el => {
+    const r=el.getBoundingClientRect();const root=el.getRootNode();
+    const hit=root.elementFromPoint(r.left+12,r.top+12);
+    return getComputedStyle(el).visibility==="visible" && hit && el.contains(hit);
+  });
+  assert(painted, "Host clipping or CSS hid the rendered labels");
+  await page.screenshot({path:path.join(root,"artifacts/overlay-host-isolation.png")});
+  await page.evaluate(()=>{document.getElementById("host-css").remove();document.getElementById("root").style.cssText="";});
   await page.evaluate(() => window.preview.narrow());
   await page.waitForTimeout(100);
   const narrow = await page.locator("[data-reading-label]").boundingBox();
   assert(narrow.width >= 360 && narrow.height < 140, "Narrow OCR boxes must not make vertical labels");
   await page.evaluate(() => window.preview.crowded());
   await page.waitForTimeout(100);
-  const list = page.locator("[data-reading-list]");
-  assert.equal(await list.count(), 1, "Dense text must use the non-overlapping scroll fallback");
-  const dense = await page.locator("[data-reading-label]").evaluateAll(els => els.map(el => {const b=el.getBoundingClientRect();return {top:b.top,bottom:b.bottom};}));
-  assert.equal(dense.length, 8);
-  for(let i=1;i<dense.length;i++) assert(dense[i].top >= dense[i-1].bottom, "Reading labels overlap");
-  await page.locator('[data-reading-label]').last().scrollIntoViewIfNeeded();
-  assert(await list.evaluate(el => el.scrollTop > 0), "All labels must remain reachable by scrolling");
+  assert.equal(await page.locator("[data-reading-list]").count(), 0, "The scrolling fallback must be removed");
+  assert.equal(await page.locator("[data-label-pages]").count(), 1, "Dense text must expose page navigation");
+  const seen = new Set();
+  do {
+    const visible = await checkBounds();
+    assert(visible.length > 0, "A label page must never be blank");
+    for(let i=0;i<visible.length;i++) for(let j=i+1;j<visible.length;j++) {
+      const a=visible[i],b=visible[j];
+      assert(a.right<=b.left || b.right<=a.left || a.bottom<=b.top || b.bottom<=a.top, "Labels overlap on a crowded page");
+    }
+    for(const index of await page.locator("[data-reading-label]").evaluateAll(els => els.map(el=>el.dataset.line))) seen.add(index);
+    if(await page.getByRole("button", {name:"Next labels"}).isDisabled()) break;
+    await page.getByRole("button", {name:"Next labels"}).click();
+    await page.waitForTimeout(50);
+  } while(seen.size < 9);
+  assert.equal(seen.size, 8, "Every recognized line must be visible on a reachable page");
+  await page.getByRole("button", {name:"Previous labels"}).click();
+  assert(await page.getByRole("button", {name:"Next labels"}).isEnabled());
   await page.evaluate(() => window.preview.large());
   await page.waitForTimeout(100);
   await checkBounds();
@@ -83,6 +112,7 @@ try {
   await page.evaluate(() => window.preview.stop());
   await page.waitForTimeout(100);
   assert.equal(await page.locator("ruby").count(), 0);
+  assert.equal(await page.locator("[data-pinyin-overlay-host]").count(), 0, "Dismissed/stopped overlays must remove their portal");
   await page.evaluate(() => window.preview.beginController());
   await page.clock.runFor(200);
   await page.evaluate(() => window.preview.both());
@@ -146,7 +176,7 @@ try {
   assert.equal(await page.getByLabel("Read Chinese after capture").count(), 1);
   assert.equal(await page.getByLabel("Text size").count(), 1);
   assert.deepEqual(errors, []);
-  console.log("Overlay verified at 1280×800: ruby alignment, text fit, L4/L5 script holds, default activation, source-anchored wide labels, non-overlapping scroll fallback, translucent background, direct capture, dismiss cancellation, polling recovery. Steam composition hook is stubbed; physical Deck still required.");
+  console.log("Overlay verified at 1280×800: ruby alignment, text fit, L4/L5 script holds, default activation, source-anchored wide labels, non-overlapping pages, host CSS/clipping isolation, translucent background, direct capture, dismiss cancellation, polling recovery. Steam composition hook is stubbed; physical Deck still required.");
 } finally {
   await browser.close();
 }

@@ -8,7 +8,7 @@ const overlap = (a: Placement, b: Placement) => Math.max(0, Math.min(a.left + a.
 export const labelsOverlap = (boxes: Placement[]) => boxes.some((box, index) => boxes.slice(index + 1).some(other => overlap(box, other) > 0));
 
 // Anchor over the original text. Search neighboring free edges only when a
-// label would collide. If no layout fits, the view uses a scrollable stack.
+// label would collide. If no layout fits, paginateLabels starts another page.
 export function placeLabels(rects: Rect[], sizes: LabelSize[], width: number, height: number): Placement[] {
   const placed: Placement[] = [];
   rects.forEach((rect, index) => {
@@ -32,4 +32,23 @@ export function placeLabels(rects: Rect[], sizes: LabelSize[], width: number, he
     placed.push(candidates[0].box);
   });
   return placed;
+}
+
+export interface LabelPage { indices: number[]; positions: Placement[]; }
+
+// Keep every label at a source-based position. Dense captures are split into
+// pages instead of moving all text into a clipped or scroll-dependent list.
+export function paginateLabels(rects: Rect[], sizes: LabelSize[], width: number, height: number): LabelPage[] {
+  const pages: LabelPage[] = [];
+  let current: LabelPage = { indices: [], positions: [] };
+  rects.forEach((_, index) => {
+    const indices = [...current.indices, index];
+    const positions = placeLabels(indices.map(i => rects[i]), indices.map(i => sizes[i]), width, height);
+    if (current.indices.length && labelsOverlap(positions)) {
+      pages.push(current);
+      current = { indices: [index], positions: placeLabels([rects[index]], [sizes[index]], width, height) };
+    } else current = { indices, positions };
+  });
+  if (current.indices.length) pages.push(current);
+  return pages;
 }
