@@ -8,7 +8,7 @@ This repository is public because it makes downloading and installing updates di
 
 ## Install
 
-1. Download **Decky-Pinyin-0.7.4-offline.zip** from [Releases](https://github.com/xmfan/decky-pinyin/releases/tag/v0.7.4) and copy it to your Deck.
+1. Download **Decky-Pinyin-0.7.5-offline.zip** from [Releases](https://github.com/xmfan/decky-pinyin/releases/tag/v0.7.5) and copy it to your Deck.
 2. In Decky settings, enable Developer Mode. Open **Developer → Install Plugin from ZIP** and select the file.
 3. Launch a game in **Gaming Mode**, open **Decky Pinyin**, and allow the local models to load. Shortcuts are enabled by default. Disable other plugins using L4/L5.
 
@@ -22,11 +22,12 @@ The offline ZIP includes the models, voice, dependencies and Python runtime. No 
 | --- | --- |
 | Capture Simplified Chinese | Hold **L4** for **0.2 seconds** |
 | Capture Traditional Chinese | Hold **L5** for **0.2 seconds** |
+| Refresh visible labels, keeping the current script | **Tap L4** (release before 0.2 seconds) |
 | Dismiss visible labels | Hold either key for **0.2 seconds** |
 
-Release the key before capturing again. The panel also has **Capture Simplified**, **Capture Traditional** and **Dismiss overlay** buttons. Each capture reads the full screen; capture again when the game text changes.
+Release the key before capturing again. The panel also has **Capture Simplified**, **Capture Traditional** and **Dismiss overlay** buttons. Each capture reads the full screen; tap L4 to refresh when the game text changes. Refresh is available once labels appear, not while recognition is still running.
 
-- Dark labels appear near the original text, with a lightly dimmed game behind them. Crowded rows shift upward in reading order; **Previous/Next** shows more labels if they cannot fit.
+- Translucent dark labels appear near the original text, with a lightly dimmed game behind them. Crowded rows shift upward in reading order; **Previous/Next** shows more labels if they cannot fit.
 - Chinese defaults to **14 px**, pinyin to about **9 px**, and English to **11 px**. Adjust **Text size**, **Pinyin tones**, or **English translation** in the panel.
 - Mandarin speech plays automatically after capture. Turn off **Read Chinese after capture** for manual speech, then use a label's speaker icon or **Speak captured Chinese**. Dismissing the overlay stops speech.
 - Disable the shortcuts to unload the models. That preference is remembered. After suspend, enable the shortcuts again if needed.
@@ -35,7 +36,7 @@ Release the key before capturing again. The panel also has **Capture Simplified*
 
 Open **Decky Pinyin → Updates → Check for updates**, then choose **Update to …** and confirm in Decky's dialog. Decky downloads the complete offline ZIP, verifies its checksum and reloads the plugin. Published prereleases are included.
 
-**Install 0.7.4 manually once to get these buttons.** Update checks and downloads need internet; capture, pinyin, translation and speech do not. Checks happen only when you press the button. If the installer is unavailable, update Decky or install the latest offline ZIP manually.
+**If you have 0.7.4 or newer, update from the panel. On older versions, install the latest offline ZIP manually once to get these buttons.** Update checks and downloads need internet; capture, pinyin, translation and speech do not. Checks happen only when you press the button. If the installer is unavailable, update Decky or install the latest offline ZIP manually.
 
 ## Limits and performance
 

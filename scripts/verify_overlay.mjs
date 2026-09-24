@@ -66,7 +66,8 @@ try {
   assert(anchor.y >= 640 && anchor.y < 650, "First label must cover its original subtitle position");
   await page.screenshot({ path: path.join(root, "artifacts/overlay-preview.png") });
   assert.equal(await page.locator("#root img").count(), 0, "No full-screen captured image is rendered");
-  assert.equal(await page.locator("[data-game-dimmer]").evaluate(el => getComputedStyle(el).backgroundColor), "rgba(0, 0, 0, 0.12)");
+  assert.equal(await page.locator("[data-game-dimmer]").evaluate(el => getComputedStyle(el).backgroundColor), "rgba(0, 0, 0, 0.08)");
+  assert.equal(await page.locator("[data-reading-label]").first().evaluate(el=>getComputedStyle(el).backgroundColor), "rgba(9, 17, 26, 0.8)");
   // Model the clipping and global styles a host application can impose.
   await page.evaluate(() => {
     const root=document.getElementById("root");
@@ -199,6 +200,70 @@ try {
   await page.clock.runFor(200);
   assert.equal(await page.evaluate(() => window.preview.starts()), 1, "Explicitly disabled preference must remain disabled");
   await page.evaluate(() => window.preview.closeController());
+  // Fresh controller: distinguish taps from holds and retain the capture script.
+  await page.goto(pathToFileURL(path.join(root, ".cache/overlay-preview.html")).href);
+  await page.evaluate(()=>window.preview.beginController());
+  await page.clock.runFor(200);
+  const key = async (name, duration, settle = 450) => {
+    await page.evaluate(name=>window.preview[name](),name);
+    await page.clock.runFor(duration);
+    await page.evaluate(()=>window.preview.release());
+    await page.clock.runFor(settle);
+  };
+  const captureCount = () => page.evaluate(()=>window.preview.captures().length);
+  await key("l4",100);
+  await key("press",100);
+  assert.equal(await captureCount(),0,"Taps without labels must not capture");
+  await key("press",260);
+  await page.evaluate(()=>window.preview.finish());
+  await page.clock.runFor(600);
+  assert.equal(await captureCount(),1);
+  await key("press",100);
+  assert.equal(await captureCount(),1,"A short L5 press must not refresh or dismiss");
+  assert(await page.locator("ruby").count()>0);
+  await page.evaluate(()=>window.preview.l4());
+  await page.clock.runFor(100);
+  assert.equal(await captureCount(),1,"Refresh must wait for release");
+  assert(await page.locator("ruby").count()>0);
+  await page.evaluate(()=>window.preview.release());
+  await page.clock.runFor(450);
+  assert.equal(await captureCount(),2,"A short L4 release refreshes exactly once");
+  const refreshed = (await page.evaluate(()=>window.preview.captures()))[1];
+  assert.equal(refreshed.script,"traditional","L4 refresh must retain Traditional from the previous capture");
+  assert.equal(refreshed.overlayVisible,false,"Refresh must hide old labels before capture");
+  await key("l4",100);
+  assert.equal(await captureCount(),2,"Taps during recognition must not queue another capture");
+  await page.evaluate(()=>window.preview.finish());
+  await page.clock.runFor(600);
+  await key("l4",1200);
+  assert.equal(await captureCount(),2,"Holding L4 must only dismiss, with no refresh or repeated capture on release");
+  assert.equal(await page.locator("ruby").count(),0);
+  await key("l4",260);
+  await page.evaluate(()=>window.preview.finish());
+  await page.clock.runFor(600);
+  assert.equal((await page.evaluate(()=>window.preview.captures()))[2].script,"simplified");
+  await page.evaluate(()=>window.preview.l4());
+  await page.clock.runFor(100);
+  await page.evaluate(()=>window.preview.both());
+  await page.clock.runFor(100);
+  await page.evaluate(()=>window.preview.l4());
+  await page.clock.runFor(350);
+  await page.evaluate(()=>window.preview.release());
+  await page.clock.runFor(450);
+  assert.equal(await captureCount(),3,"An ambiguous chord must stay canceled until both keys are released");
+  assert(await page.locator("ruby").count()>0,"Canceled chord must not dismiss labels");
+  await key("l4",100);
+  assert.equal(await captureCount(),4);
+  assert.equal((await page.evaluate(()=>window.preview.captures()))[3].script,"simplified","Refresh must also retain Simplified");
+  await page.evaluate(()=>window.preview.finish());
+  await page.clock.runFor(600);
+  await page.evaluate(()=>window.preview.l4());
+  await page.clock.runFor(100);
+  await page.evaluate(()=>window.preview.closeController());
+  await page.clock.runFor(400);
+  await page.evaluate(()=>window.preview.release());
+  await page.clock.runFor(450);
+  assert.equal(await captureCount(),4,"Unloading during a press must cancel its pending action");
   await page.goto(pathToFileURL(path.join(root, ".cache/overlay-preview.html")).href + "?panel");
   await page.getByRole("button", { name: "Capture Traditional · L5" }).click();
   assert.equal((await page.evaluate(() => window.preview.captures()))[0].script, "traditional");
@@ -267,7 +332,7 @@ try {
   assert.equal(await game.locator("[data-pinyin-overlay-host]").count(),0,"Stopping must remove the host from its owner document");
   await game.close();
   assert.deepEqual(errors, []);
-  console.log("Overlay verified at 1280×800: ruby alignment, text fit, L4/L5 script holds, default activation, source-anchored wide labels, non-overlapping pages, compact text and ordered bottom dialogue, host CSS/clipping isolation, separate loader/game windows and viewport scaling, translucent background, direct capture, dismiss cancellation, polling recovery, release selection/checksum validation and native update handoff. Steam composition hook is stubbed; physical Deck still required.");
+  console.log("Overlay verified at 1280×800: ruby alignment, text fit, L4 tap refresh preserving scripts, tap/hold/chord cancellation, L4/L5 script holds, default activation, source-anchored wide labels, non-overlapping pages, compact text and ordered bottom dialogue, host CSS/clipping isolation, separate loader/game windows and viewport scaling, translucent background, direct capture, dismiss cancellation, polling recovery, release selection/checksum validation and native update handoff. Steam composition hook is stubbed; physical Deck still required.");
 } finally {
   await browser.close();
 }

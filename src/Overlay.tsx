@@ -84,7 +84,7 @@ function ReadingSurface({ store }: { store: Store }) {
   const speak = (line: number) => { void rpc.speak(line).then(store.update).catch(console.error); };
   const speaking = state.speech_status === "generating" || state.speech_status === "speaking";
   return <div ref={surface} data-reading-surface style={{ position: "fixed", inset: 0, width: "100vw", height: "100vh", pointerEvents: "none" }}>
-    <div data-game-dimmer style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.12)", zIndex: 7999, pointerEvents: "none" }} />
+    <div data-game-dimmer style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.08)", zIndex: 7999, pointerEvents: "none" }} />
     <div data-screenshot-plane style={{ position: "fixed", left: (viewport.width - width) / 2,
       top: (viewport.height - height) / 2, width, height, zIndex: 8000, pointerEvents: "none" }}>
       <div>
@@ -96,7 +96,7 @@ function ReadingSurface({ store }: { store: Store }) {
             style={{ position: "absolute", visibility: shown ? "visible" : "hidden", left: position?.left ?? 4,
               top: position?.top ?? 32, width: cardWidth(index), maxHeight: height - 48,
               flexShrink: 0, writingMode: "horizontal-tb",
-              padding: "3px 6px", boxSizing: "border-box", borderRadius: 5, color: "#f5f7fa", background: "rgba(9,17,26,.94)",
+              padding: "3px 6px", boxSizing: "border-box", borderRadius: 5, color: "#f5f7fa", background: "rgba(9,17,26,.80)",
               fontFamily: "sans-serif", overflowY: "auto", pointerEvents: shown ? "auto" : "none" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
               <div style={{ flex: 1, minWidth: 0, fontSize: state.settings.font_size, lineHeight: 1.1, overflowWrap: "normal" }}>
@@ -113,8 +113,8 @@ function ReadingSurface({ store }: { store: Store }) {
       </div>
     </div>
     <div style={{ position: "fixed", right: 8, top: 6, zIndex: 8001, padding: "4px 8px", borderRadius: 4,
-      background: "rgba(9,17,26,.88)", color: "#a4ccad", fontSize: 11, pointerEvents: "auto" }}>
-      L4 / L5 · 0.2s to dismiss · {result?.lines.length || 0} labels
+      background: "rgba(9,17,26,.80)", color: "#a4ccad", fontSize: 11, pointerEvents: "auto" }}>
+      Tap L4 to refresh · Hold L4 / L5 0.2s to dismiss · {result?.lines.length || 0} labels
       {pages.length > 1 && <span data-label-pages>
         <button aria-label="Previous labels" disabled={selectedPage === 0} onClick={() => setPageIndex(selectedPage - 1)} style={{ marginLeft: 8 }}>Previous</button>
         <span> Page {selectedPage + 1} / {pages.length}</span>

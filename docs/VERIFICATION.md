@@ -105,3 +105,11 @@ The Update button calls Decky's native `utilities/install_plugin` route with the
 Browser tests cover no automatic network requests, 0.7.10 vs 0.7.9 numeric ordering, draft exclusion, prerelease inclusion, current/older releases, missing assets, foreign URLs, malformed checksums, offline/rate-limit/timeout failures, unavailable/failed installers, and the exact native installer payload. Existing overlay/input/speech checks pass. TypeScript and production build pass. An anonymous live check using a simulated installed 0.7.2 found public 0.7.3 and its exact published SHA-256 sidecar. Actual Decky download, replacement and reload still require a physical Deck.
 
 README now focuses on installation, use, updates and current user-facing limits. Build, architecture, testing and release guidance moved into AGENTS.md. The README identifies the plugin as functional but under active development, with UX work remaining, and explains why the repository is public.
+
+## Tap-to-refresh and lighter backgrounds (0.7.5)
+
+With ready labels visible, L4 released before 200 ms refreshes through the existing hide/menu-settle/capture path and retains the last capture's Simplified/Traditional selection. Holding either key dismisses, latching the outcome until release so it cannot also refresh. With no labels, the existing 200 ms L4 Simplified/L5 Traditional captures remain. Short L5 presses and L4 taps during recognition do nothing. Ambiguous chords cancel until both script keys are released; unload cancels pending gesture timers.
+
+Card/toolbar backgrounds are 80% opaque (cards were 94%); screen dimming is 8% (was 12%). Text opacity is unchanged. Browser fixtures record the new appearance and assert both alpha values.
+
+TypeScript/build and browser tests pass, including refresh on release only, both script selections, hidden old labels during recapture, ignored busy taps, long holds without repeats/refresh, short L5 no-op, full chord cancellation and unload during a press. Existing overlay layout, multi-window, speech, updater and capture regressions pass. Actual Deck button timing, new background readability and update installation remain device checks.

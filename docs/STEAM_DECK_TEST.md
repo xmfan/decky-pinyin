@@ -1,6 +1,6 @@
 # Steam Deck acceptance test
 
-The user confirmed 0.7.2 capture, speech and overlay work. The following 0.7.4 checks are pending on a physical Steam Deck. Host tests cannot establish Gamescope capture, Steam overlay rendering, or in-game latency/power impact.
+The user confirmed 0.7.2 capture, speech and overlay work. The following 0.7.5 checks are pending on a physical Steam Deck. Host tests cannot establish Gamescope capture, Steam overlay rendering, or in-game latency/power impact.
 
 ## Install and offline inference
 
@@ -62,3 +62,11 @@ If capture fails, inspect Decky's plugin log and run `pw-dump` as the Deck user.
 - With no newer release, confirm the panel says up to date. Disconnect internet: a check must show a recoverable error while local capture/speech continue working.
 - Once a newer release exists, check that its version and size appear. Update must open Decky's native confirmation. Cancel and confirm the current plugin still works; retry and approve.
 - Verify Decky downloads the full ZIP, reloads the plugin, shows the new installed version, preserves settings, and still captures/reads with L4/L5. This replacement/reload is not covered by the browser mock.
+
+## Tap refresh and transparency (0.7.5)
+
+- From 0.7.4, use Updates → Check for updates → Update to 0.7.5, and verify the native install/reload on the Deck. Older installs need the offline ZIP once.
+- Hold L5 to capture Traditional, then change the game dialogue and tap/release L4 in under 0.2 seconds. Confirm fresh capture, pinyin, translation and automatic speech while keeping Traditional. Repeat starting from L4/Simplified.
+- Hold either key with labels visible: dismiss exactly once. Keep holding for over a second, then release; nothing should refresh or capture until a new press.
+- Short L5 presses, L4 taps with no labels, and taps while recognizing should not capture. Pressing both L4/L5 cancels the gesture until both are released.
+- Confirm the 80%-opaque dark cards and 8% screen dimming keep text readable while showing more of the game.

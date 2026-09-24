@@ -39,7 +39,7 @@ export function Panel({ store, controller }: { store: Store; controller: Control
         <PanelSectionRow><ButtonItem disabled={busy} layout="below" onClick={() => void action(controller.dismiss)}>Dismiss overlay</ButtonItem></PanelSectionRow>
       </>}
       <PanelSectionRow><div style={{ fontSize: 12, lineHeight: 1.5, color: "#a7b7c6" }}>
-        Hold either key for 0.2 seconds. When labels are visible, either key dismisses them; hold again to capture.
+        Hold either key for 0.2 seconds to capture. With labels visible, tap L4 to refresh the current script or hold either key to dismiss.
       </div></PanelSectionRow>
       <PanelSectionRow><div style={{ fontSize: 13, color: state.status === "error" ? "#ffb4ab" : "#b8c9d9", marginBottom: 10 }}>
         {state.message}

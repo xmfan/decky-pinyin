@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import { Panel } from "../src/Panel";
 import { Overlay } from "../src/Overlay";
 import { Controller } from "../src/Controller";
+import { currentVersion } from "../src/updates";
 import { Store } from "../src/store";
 import type { State } from "../src/types";
 import fixture from "../artifacts/overlay-fixture.json";
@@ -99,7 +100,7 @@ const installer = {call: async (...args: unknown[]) => {
   const latest = release("0.7.10");
   if(updateMode === "missing-asset") latest.assets.pop();
   if(updateMode === "foreign-url") latest.assets[0].browser_download_url = "https://example.org/plugin.zip";
-  return new Response(JSON.stringify(updateMode === "current" ? [release("0.7.4")] :
+  return new Response(JSON.stringify(updateMode === "current" ? [release(currentVersion)] :
     updateMode === "older" ? [release("0.7.3")] : [release("0.7.9"), release("99.0.0",true), latest]));
 };
 Object.assign((window as any).preview, {

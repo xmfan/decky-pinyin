@@ -11,6 +11,7 @@ export class Controller {
   private progressListeners = new Set<() => void>();
   private run = 0;
   private capturing = false;
+  private captureScript: "auto" | "simplified" | "traditional" = "auto";
   private enabled = false;
   private initialized = false;
   private spoken = "";
@@ -30,7 +31,7 @@ export class Controller {
       this.progressListeners.forEach((fn) => fn());
     });
     this.input.onShortcutPressed((action, script) => {
-      void (action === ActionType.DISMISS ? this.dismiss() : this.capture(script)).catch(this.report);
+      void (action === ActionType.DISMISS ? this.dismiss() : action === ActionType.REFRESH ? this.refreshCapture() : this.capture(script)).catch(this.report);
     });
     this.unsubscribe = store.subscribe(() => {
       const state = store.snapshot();
@@ -39,6 +40,7 @@ export class Controller {
         this.enabled = enabled;
         this.input.setEnabled(enabled);
       }
+      this.input.setRefreshEnabled(!!state?.result?.lines.length && !state?.busy);
       this.input.setOverlayVisible(!!(state?.screenshot || state?.result?.lines.length || state?.busy));
       const error = state && (state.status === "error" || state.message.startsWith("Capture failed:")) ? state.message : "";
       if (error && error !== this.lastError) this.report(error);
@@ -83,6 +85,7 @@ export class Controller {
     if (this.capturing || this.store.snapshot()?.status !== "running") return rpc.get();
     const run = ++this.run;
     this.capturing = true;
+    this.captureScript = script;
     try {
       // Original sequence: clear old image, close Steam's menu, capture through
       // a direct backend call, then display the screenshot and model results.
@@ -96,6 +99,12 @@ export class Controller {
     } finally {
       if (run === this.run) this.capturing = false;
     }
+  };
+
+  refreshCapture = async () => {
+    const state = this.store.snapshot();
+    if (this.closed || this.capturing || state?.busy || !state?.result?.lines.length) return rpc.get();
+    return this.capture(this.captureScript);
   };
 
   dismiss = async () => {

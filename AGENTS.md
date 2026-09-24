@@ -6,7 +6,7 @@
 - Keep local Docker closed on this workstation. Use GitHub Actions for Linux capture/audio integration.
 - Do not commit clipboard images or other personal test material. Keep it under ignored `.cache/`. Use synthetic fixtures for committed screenshots.
 - No settings migration is needed for the current manual reinstall workflow.
-- Preserve L4 = Simplified and L5 = Traditional, 200 ms capture/dismiss holds, and automatic Mandarin speech by default.
+- Preserve L4 = Simplified and L5 = Traditional for 200 ms capture holds; with labels visible, tap L4 to refresh the current script and hold either key for 200 ms to dismiss. Keep automatic Mandarin speech by default.
 - Keep labels non-overlapping and in reading order, with dark cards and only subtle full-screen dimming. Never display a captured screenshot over the game.
 
 ## Architecture and constraints
@@ -95,6 +95,8 @@ Release procedure:
 3. Package via `.venv/bin/python scripts/package.py`; confirm the offline ZIP contains the current bundle and metadata and matches its SHA-256 sidecar. Keep ignored caches, models, runtime staging and ZIPs out of Git. The source ZIP must include AGENTS.md.
 4. Push source and let `.github/workflows/check.yml` verify Linux models, browser behavior, packaging and synthetic PipeWire capture/audio.
 5. Create a draft prerelease with the exact commit and attach `Decky-Pinyin-VERSION-offline.zip`, its `.sha256` sidecar and the corresponding source ZIP. Publish only after CI succeeds and uploads are complete. The updater includes prereleases; uploading before publishing avoids partial updates.
+
+Label cards use 80% opacity, with 8% full-screen dimming; text remains fully opaque. Script gestures latch their action when pressed: a release before 200 ms refreshes only for L4 with ready labels; reaching the threshold fires one hold action. Chords cancel until both keys are released. Preserve these distinctions and current-script retention in browser regressions.
 
 The user confirmed 0.7.2 capture, speech and overlay visibility on Deck. The 0.7.3 layout is browser-verified; compact readability and reading order still need device confirmation. Frame rate, power and battery impact are not measured. Historical evidence belongs in `docs/VERIFICATION.md`, not the user-facing README.
 

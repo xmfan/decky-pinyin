@@ -52,7 +52,8 @@ export enum InputMode {
 export enum ActionType {
     TRANSLATE = 0,
     DISMISS = 1,
-    TOGGLE_TRANSLATIONS = 2
+    TOGGLE_TRANSLATIONS = 2,
+    REFRESH = 3
 }
 
 export interface ProgressInfo {
@@ -116,7 +117,9 @@ export class Input {
     private clearCooldownTimeoutId: ReturnType<typeof setTimeout> | null = null;
     private cooldownDuration = 50; // one input poll for short holds
 
-    private scriptButton: Button | null = null;
+    private scriptGesture: { button: Button; started: number; forDismiss: boolean; canRefresh: boolean; fired: boolean } | null = null;
+    private scriptChordBlocked = false;
+    private refreshEnabled = false;
     private inputMode: InputMode = InputMode.L5_BUTTON;
 
     private translateHoldTime = 1000;
@@ -312,6 +315,9 @@ export class Input {
             this.leftTouchpadTouched = false;
             this.rightTouchpadTouched = false;
             this.currentlyPressedButtons.clear();
+            this.previousButtons = [];
+            this.scriptGesture = null;
+            this.scriptChordBlocked = false;
         }
     }
 
@@ -344,6 +350,7 @@ export class Input {
     // Unregister the input handler
     unregister(): void {
         logger.info('Input', 'Unregistering input, clearing timers and health check');
+        this.setEnabled(false);
 
         // Stop health check
         if (this.healthCheckInterval) {
@@ -365,6 +372,8 @@ export class Input {
     setInputMode(mode: InputMode): void {
         logger.info('Input', `Setting input mode to ${InputMode[mode]}`);
         this.inputMode = mode;
+        this.scriptGesture = null;
+        this.scriptChordBlocked = false;
         this.inCooldown = false;
         this.waitingForRelease = false;
         this.touchStartTime = null;
@@ -383,6 +392,10 @@ export class Input {
     setOverlayVisible(visible: boolean): void {
         logger.info('Input', `Overlay visibility set to ${visible}`);
         this.overlayVisible = visible;
+    }
+
+    setRefreshEnabled(enabled: boolean): void {
+        this.refreshEnabled = enabled;
     }
 
     setTranslateHoldTime(ms: number): void {
@@ -464,17 +477,62 @@ export class Input {
         this.notifyProgressListeners({ active: false, progress: 0, forDismiss: this.overlayVisible });
     }
 
+    // A single press has one outcome: a held action, or L4 refresh on release.
+    // A chord cancels the whole gesture until both script keys are released.
+    private handleScriptButtons(buttons: Button[]): void {
+        if (!this.enabled) return;
+        const l4 = buttons.includes(Button.L4), l5 = buttons.includes(Button.L5);
+        if (l4 && l5) {
+            this.scriptChordBlocked = true;
+            this.scriptGesture = null;
+            this.stopProgressAnimation();
+            return;
+        }
+        if (this.scriptChordBlocked) {
+            if (!l4 && !l5) this.scriptChordBlocked = false;
+            return;
+        }
+        const key = l4 ? Button.L4 : l5 ? Button.L5 : null;
+        const previous = this.scriptGesture;
+        if (previous && key === previous.button) return;
+        if (previous) {
+            this.scriptGesture = null;
+            this.stopProgressAnimation();
+            // Switching directly between script keys is ambiguous; require release.
+            if (key !== null) {
+                this.scriptChordBlocked = true;
+                return;
+            }
+            if (!previous.fired) {
+                const threshold = previous.forDismiss ? this.dismissHoldTime : this.translateHoldTime;
+                if (Date.now() - previous.started >= threshold) {
+                    this.onButtonsPressedListeners.forEach(cb => cb(previous.forDismiss ? ActionType.DISMISS : ActionType.TRANSLATE,
+                        previous.button === Button.L4 ? "simplified" : "traditional"));
+                } else if (previous.button === Button.L4 && previous.canRefresh && this.refreshEnabled && this.overlayVisible) {
+                    this.onButtonsPressedListeners.forEach(cb => cb(ActionType.REFRESH));
+                }
+            }
+            return;
+        }
+        if (key === null) return;
+        const gesture = { button: key, started: Date.now(), forDismiss: this.overlayVisible,
+            canRefresh: this.overlayVisible && this.refreshEnabled, fired: false };
+        this.scriptGesture = gesture;
+        this.touchStartTime = gesture.started;
+        this.updateProgressAnimation();
+        this.timeoutId = setTimeout(() => {
+            if (!this.enabled || this.scriptGesture !== gesture) return;
+            gesture.fired = true;
+            this.stopProgressAnimation();
+            this.onButtonsPressedListeners.forEach(cb => cb(gesture.forDismiss ? ActionType.DISMISS : ActionType.TRANSLATE,
+                gesture.button === Button.L4 ? "simplified" : "traditional"));
+        }, gesture.forDismiss ? this.dismissHoldTime : this.translateHoldTime);
+    }
+
     private OnButtonsPressed(buttons: Button[]): void {
         if (this.inputMode === InputMode.SCRIPT_BUTTONS) {
-            const key = buttons.includes(Button.L4) === buttons.includes(Button.L5) ? null
-                : buttons.includes(Button.L4) ? Button.L4 : Button.L5;
-            if (key !== this.scriptButton || key === null) {
-                this.stopProgressAnimation();
-                this.waitingForRelease = false;
-                this.leftTouchpadTouched = this.rightTouchpadTouched = false;
-            }
-            this.scriptButton = key;
-            if (key === null) return;
+            this.handleScriptButtons(buttons);
+            return;
         }
         // A short L5 hold can be released inside the cooldown. Always clear
         // its pressed state so the next hold is not swallowed.
@@ -552,10 +610,6 @@ export class Input {
         let buttonName = '';
 
         switch (this.inputMode) {
-            case InputMode.SCRIPT_BUTTONS:
-                buttonPressed = this.scriptButton !== null;
-                buttonName = this.scriptButton === Button.L4 ? 'L4' : 'L5';
-                break;
             case InputMode.L4_BUTTON:
                 buttonPressed = buttons.includes(Button.L4);
                 buttonName = 'L4';
@@ -657,7 +711,7 @@ export class Input {
                         this.lastActionTime = Date.now();
                         const actionType = this.overlayVisible ? ActionType.DISMISS : ActionType.TRANSLATE;
                         logger.info('Input', `Action triggered: ${ActionType[actionType]}`);
-                        this.onButtonsPressedListeners.forEach(cb => cb(actionType, this.inputMode === InputMode.SCRIPT_BUTTONS ? (this.scriptButton === Button.L4 ? "simplified" : "traditional") : undefined));
+                        this.onButtonsPressedListeners.forEach(cb => cb(actionType));
                         this.stopProgressAnimation();
                         this.waitingForRelease = true;
                         if (this.clearCooldownTimeoutId) clearTimeout(this.clearCooldownTimeoutId);
