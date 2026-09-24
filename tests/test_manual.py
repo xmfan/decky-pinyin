@@ -90,3 +90,31 @@ async def test_dismiss_cancels_capture_and_next_tap_retries_without_reloading():
     finally:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)
+
+
+@pytest.mark.asyncio
+async def test_script_is_selected_per_capture_without_reloading_models():
+    events = []
+    class Capture:
+        async def take(self):
+            return Frame(np.zeros((100, 200, 3), np.uint8), 0, 1)
+    class OCR:
+        def recognize(self, _):
+            return [{"text": "銀行歡迎你", "confidence": 1}]
+    class Pinyin:
+        def convert(self, text, _):
+            return [{"text": text, "pinyin": ""}]
+    async def emit(event):
+        events.append(event)
+    session = ManualSession(Settings(), Capture(), OCR(), Pinyin(), None, emit)
+    task = asyncio.create_task(session.run())
+    try:
+        for request, script, expected in ((1, "simplified", "银行欢迎你"), (2, "traditional", "銀行歡迎你")):
+            session.command("capture", request, script)
+            await wait_until(lambda: any(e.get("request_id") == request and e.get("busy") is False for e in events))
+            result = next(e for e in events if e.get("request_id") == request and e.get("type") == "result")
+            assert result["lines"][0]["text"] == expected
+        assert session.settings.chinese_script == "auto"
+    finally:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)

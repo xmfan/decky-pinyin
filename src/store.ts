@@ -10,7 +10,7 @@ export const rpc = {
   speak: callable<[line: number], State>("speak"),
   stopSpeech: callable<[], State>("stop_speech"),
   stop: callable<[], State>("stop"),
-  capture: callable<[], State>("capture"),
+  capture: callable<[script: "auto" | "simplified" | "traditional"], State>("capture"),
   dismiss: callable<[], State>("dismiss"),
   save: callable<[settings: Settings], State>("save_settings"),
 };

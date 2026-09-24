@@ -5,31 +5,31 @@ export interface Placement { left: number; top: number; width: number; height: n
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(value, Math.max(low, high)));
 const overlap = (a: Placement, b: Placement) => Math.max(0, Math.min(a.left + a.width, b.left + b.width) - Math.max(a.left, b.left)) *
   Math.max(0, Math.min(a.top + a.height, b.top + b.height) - Math.max(a.top, b.top));
+export const labelsOverlap = (boxes: Placement[]) => boxes.some((box, index) => boxes.slice(index + 1).some(other => overlap(box, other) > 0));
 
-// Prefer just above or below each detected line, then the nearest free vertical
-// slot. Coordinates are in the displayed screenshot, including letterboxing.
+// Anchor over the original text. Search neighboring free edges only when a
+// label would collide. If no layout fits, the view uses a scrollable stack.
 export function placeLabels(rects: Rect[], sizes: LabelSize[], width: number, height: number): Placement[] {
   const placed: Placement[] = [];
   rects.forEach((rect, index) => {
     const size = sizes[index];
-    const left = clamp((rect.left + rect.right) * width / 2 - size.width / 2, 4, width - size.width - 4);
-    const above = rect.top * height - size.height - 4;
-    const below = rect.bottom * height + 4;
-    const candidates = [above, below];
-    for (let step = 1; step <= rects.length; step++) {
-      candidates.push(above - step * (size.height + 4), below + step * (size.height + 4));
+    const anchorX = clamp(rect.left * width, 4, width - size.width - 4);
+    const anchorY = clamp(rect.top * height, 32, height - size.height - 4);
+    const xs = [anchorX, 4, width - size.width - 4];
+    const ys = [anchorY, 32, height - size.height - 4];
+    for (const other of placed) {
+      xs.push(other.left - size.width - 6, other.left + other.width + 6);
+      ys.push(other.top - size.height - 6, other.top + other.height + 6);
     }
-    const scored = candidates.map((top, rank) => {
-      const box = { left, top: clamp(top, 1, height - size.height - 1), ...size };
-      const collision = placed.reduce((sum, other) => sum + overlap(box, { left: other.left - 3, top: other.top - 3, width: other.width + 6, height: other.height + 6 }), 0);
-      const coveredText = rects.reduce((sum, source) => sum + overlap(box, {
-        left: source.left * width, top: source.top * height,
-        width: (source.right - source.left) * width, height: (source.bottom - source.top) * height,
+    const candidates = xs.flatMap(left => ys.map(top => {
+      const box = { left: clamp(left, 4, width - size.width - 4), top: clamp(top, 32, height - size.height - 4), ...size };
+      const collision = placed.reduce((sum, other) => sum + overlap(box, {
+        left: other.left - 3, top: other.top - 3, width: other.width + 6, height: other.height + 6,
       }), 0);
-      return { box, score: collision * 1000 + coveredText * 100 + Math.abs(box.top - above) + rank / 100 };
-    });
-    scored.sort((a, b) => a.score - b.score);
-    placed.push(scored[0].box);
+      return { box, collision, distance: Math.abs(box.left - anchorX) + Math.abs(box.top - anchorY) };
+    }));
+    candidates.sort((a, b) => a.collision - b.collision || a.distance - b.distance);
+    placed.push(candidates[0].box);
   });
   return placed;
 }

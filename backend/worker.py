@@ -47,10 +47,10 @@ async def run(args):
     try:
         label = "GPU-assisted OCR" if ocr.device == "gpu" else "CPU OCR"
         await emit({"type": "status", "status": "running", "busy": False,
-                    "message": f"{label} · Ready. Hold L5 for 0.2 seconds to capture."})
+                    "message": f"{label} · Ready. L4 Simplified / L5 Traditional · hold 0.2 seconds."})
         while line := await reader.readline():
             command = json.loads(line)
-            session.command(command.get("action"), command.get("request_id"))
+            session.command(command.get("action"), command.get("request_id"), command.get("chinese_script"))
     finally:
         transport.close()
         processor.cancel()

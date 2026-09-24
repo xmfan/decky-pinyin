@@ -25,7 +25,7 @@ class Plugin:
         self.version = 0
         self.request_id = 0
         self.buttons = None
-        self.input_status = "Enable to use L5"
+        self.input_status = "Enable to use L4 / L5"
         self.settings_path = Path(decky.DECKY_PLUGIN_SETTINGS_DIR) / "settings.json"
         self.settings = Settings()
         try:
@@ -78,8 +78,8 @@ class Plugin:
                 self.errors = asyncio.create_task(self._stderr(self.process))
                 self.buttons = HidrawButtonMonitor()
                 connected = await asyncio.to_thread(self.buttons.start)
-                self.input_status = ("L5 connected · hold 0.2 seconds to capture or dismiss"
-                                     if connected else "L5 unavailable; use Capture now.")
+                self.input_status = ("L4 Simplified · L5 Traditional · hold 0.2 seconds"
+                                     if connected else "Shortcuts unavailable; use the capture buttons.")
             except OSError as exc:
                 self.state.update(status="error", message=str(exc))
             await self._notify()
@@ -90,30 +90,32 @@ class Plugin:
         return {"success": bool(self.buttons and self.buttons.running),
                 "buttons": self.buttons.get_button_state() if self.buttons else []}
 
-    async def _send_command(self, action):
+    async def _send_command(self, action, chinese_script=None):
         self.request_id += 1
         try:
             if not self.process or self.process.returncode is not None or not self.process.stdin:
                 raise BrokenPipeError("Worker is not running")
-            self.process.stdin.write((json.dumps({"action": action, "request_id": self.request_id}) + "\n").encode())
+            self.process.stdin.write((json.dumps({"action": action, "request_id": self.request_id, "chinese_script": chinese_script}) + "\n").encode())
             await self.process.stdin.drain()
         except (BrokenPipeError, ConnectionResetError):
             self.state.update(status="error", message="Worker disconnected; disable and enable to restart.", busy=False)
 
-    async def capture(self):
+    async def capture(self, script="auto"):
+        if script not in ("auto", "traditional", "simplified"):
+            raise ValueError("Unknown Chinese script")
         async with self.lock:
             if self.state["status"] != "running":
                 return await self.get_state()
             await self._stop_speech()
             self.state.update(result=None, screenshot=None, busy=True, message="Capturing full screen…")
-            await self._send_command("capture")
+            await self._send_command("capture", script)
             await self._notify()
             return await self.get_state()
 
     async def dismiss(self):
         async with self.lock:
             await self._stop_speech()
-            self.state.update(result=None, screenshot=None, busy=False, message="Dismissed · hold L5 to capture")
+            self.state.update(result=None, screenshot=None, busy=False, message="Dismissed · L4 Simplified / L5 Traditional")
             await self._send_command("dismiss")
             await self._notify()
             return await self.get_state()
@@ -161,7 +163,7 @@ class Plugin:
         if self.buttons:
             await asyncio.to_thread(self.buttons.stop)
             self.buttons = None
-        self.input_status = "Enable to use L5"
+        self.input_status = "Enable to use L4 / L5"
         process, self.process = self.process, None
         if process:
             # Kill the whole private process group: gst-launch must not survive a worker crash.

@@ -22,15 +22,15 @@ export class Controller {
 
   constructor(readonly store: Store) {
     this.input.setEnabled(false);
-    this.input.setInputMode(InputMode.L5_BUTTON);
+    this.input.setInputMode(InputMode.SCRIPT_BUTTONS);
     this.input.setTranslateHoldTime(200);
     this.input.setDismissHoldTime(200);
     this.input.onProgress((progress) => {
       this.progress = progress;
       this.progressListeners.forEach((fn) => fn());
     });
-    this.input.onShortcutPressed((action) => {
-      void (action === ActionType.DISMISS ? this.dismiss() : this.capture()).catch(this.report);
+    this.input.onShortcutPressed((action, script) => {
+      void (action === ActionType.DISMISS ? this.dismiss() : this.capture(script)).catch(this.report);
     });
     this.unsubscribe = store.subscribe(() => {
       const state = store.snapshot();
@@ -79,7 +79,7 @@ export class Controller {
     finally { this.polling = false; }
   }
 
-  capture = async () => {
+  capture = async (script: "auto" | "simplified" | "traditional" = "auto") => {
     if (this.capturing || this.store.snapshot()?.status !== "running") return rpc.get();
     const run = ++this.run;
     this.capturing = true;
@@ -90,7 +90,7 @@ export class Controller {
       Navigation.CloseSideMenus();
       await new Promise((resolve) => setTimeout(resolve, 300));
       if (this.closed || run !== this.run) return rpc.get();
-      const state = await rpc.capture();
+      const state = await rpc.capture(script);
       if (!this.closed && run === this.run) this.store.update(state);
       return state;
     } finally {

@@ -1,4 +1,5 @@
 import { createRoot } from "react-dom/client";
+import { Panel } from "../src/Panel";
 import { Overlay } from "../src/Overlay";
 import { Controller } from "../src/Controller";
 import { Store } from "../src/store";
@@ -24,7 +25,7 @@ let backendState: State = state;
 let buttons: string[] = [];
 let starts = 0;
 const speechRequests: number[] = [];
-const captures: { overlayVisible: boolean; menuClosed: boolean }[] = [];
+const captures: { overlayVisible: boolean; menuClosed: boolean; script: unknown }[] = [];
 (window as any).testRpc = async (name: string, ...args: unknown[]) => {
   if (name === "get_hidraw_button_state") return { success: true, buttons };
   if (name === "start") { starts++; backendState = { ...backendState, version: backendState.version + 1, status: "running" }; }
@@ -32,7 +33,7 @@ const captures: { overlayVisible: boolean; menuClosed: boolean }[] = [];
   if (name === "get_updates") return args[0] === backendState.version ? null : backendState;
   if (name === "dismiss") backendState = { ...backendState, version: backendState.version + 1, result: null, screenshot: null, busy: false };
   if (name === "capture") {
-    captures.push({ overlayVisible: !!document.querySelector("ruby"), menuClosed: (window as any).menuClosed });
+    captures.push({ overlayVisible: !!document.querySelector("ruby"), menuClosed: (window as any).menuClosed, script: args[0] });
     backendState = { ...backendState, version: backendState.version + 1, result: null, screenshot: "../artifacts/ocr-fixture.png", busy: true, message: "Recognizing Chinese locally…" };
   }
   return backendState;
@@ -43,6 +44,7 @@ Object.assign((window as any).preview, {
     controller = new Controller(store);
     store.update(backendState);
   },
+  both: () => { buttons = ["L4", "L5"]; },
   press: () => { buttons = ["L5"]; },
   release: () => { buttons = []; },
   captures: () => captures,
@@ -50,6 +52,8 @@ Object.assign((window as any).preview, {
   startDisabled: () => { backendState = { ...backendState, version: backendState.version + 1, status: "stopped", result: null, settings: { ...backendState.settings, enabled: false } }; },
   startEnabled: () => { backendState = { ...backendState, version: backendState.version + 1, status: "stopped", result: null, settings: { ...backendState.settings, enabled: true } }; },
   tradition: () => store.update({ ...state, result: { ...state.result!, lines: [{ ...state.result!.lines[0], text: "銀行的行長喜歡旅行。", tokens: [..."銀行的行長喜歡旅行。"].map((text) => ({text, pinyin: "háng"})) }] } }),
+  narrow: () => store.update({ ...state, result: { ...state.result!, lines: [{ ...state.result!.lines[0], rect: { left: .2, top: .4, right: .21, bottom: .45 } }] } }),
+  crowded: () => store.update({ ...state, settings: { ...state.settings, font_size: 32 }, result: { ...state.result!, lines: Array.from({length: 8}, () => ({ ...state.result!.lines[0], tokens: Array(20).fill(state.result!.lines[0].tokens).flat(), rect: { left: .4, top: .5, right: .41, bottom: .55 } })) } }),
   multi: () => store.update({ ...state, result: { ...state.result!, lines: [
     { ...state.result!.lines[0], rect: { left: .02, top: .02, right: .43, bottom: .07 } },
     { ...state.result!.lines[0], rect: { left: .52, top: .72, right: .98, bottom: .79 } },
@@ -64,4 +68,5 @@ Object.assign((window as any).preview, {
   speechRequests: () => speechRequests,
   autoSpeech: () => { backendState = { ...backendState, version: backendState.version + 1, settings: { ...backendState.settings, tts_auto: true } }; },
 });
-createRoot(document.getElementById("root")!).render(<Overlay store={store} />);
+const panelController = { capture: async (script: string) => (window as any).testRpc("capture", script), dismiss: async () => (window as any).testRpc("dismiss") } as unknown as Controller;
+createRoot(document.getElementById("root")!).render(location.search.includes("panel") ? <Panel store={store} controller={panelController} /> : <Overlay store={store} />);

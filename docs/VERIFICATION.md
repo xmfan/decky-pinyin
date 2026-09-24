@@ -67,3 +67,11 @@ Offline Piper 1.4.2 and the pinned Huayan medium voice provide Mandarin speech, 
 ## Automatic speech default (0.6.1)
 
 The user selected automatic Mandarin reading after capture. Fresh installs now default Read Chinese after capture to on; the existing toggle allows disabling it. Existing explicit settings are preserved. The previously verified once-per-capture speech behavior is unchanged.
+
+## Script hotkeys and overlay repair (0.7.0)
+
+The user confirmed speech and pinyin work, but reported a dark screen, narrow vertical labels and missing labels. The screenshot rendering and opaque full-screen background are removed; a 12% translucent dimmer leaves the live game visible. Wider labels anchor over source rectangles, use non-overlapping pinyin token boxes, and avoid card collisions. Dense layouts fall back to a scrollable stack. ResizeObserver remeasures actual rendered card sizes. Labels stay tied to the captured positions until dismissed.
+
+L4 selects Simplified and L5 selects Traditional per request without reloading models. Either key dismisses the current overlay. The panel exposes both capture buttons and the mapping near the top. Speech remains the offline Piper Huayan medium Mandarin model, automatic by default.
+
+39 Python tests pass locally, including alternate per-capture script normalization in the same session. Browser checks cover both hotkeys, simultaneous-key rejection, no screenshot rendering, 12% dimming, wide narrow-box labels, source anchors, separate pinyin syllables, crowded scrolling, panel capture buttons and existing cancellation/speech behavior. Actual Steam rendering still requires the user's Deck.

@@ -1,6 +1,7 @@
 """Serialize manual captures while dropping superseded work and dismissed results."""
 import asyncio
 import base64
+from dataclasses import replace
 from io import BytesIO
 from PIL import Image
 
@@ -15,7 +16,9 @@ class ManualSession:
         self.pending = asyncio.Queue(maxsize=1)
         self.capture_task = None
 
-    def command(self, action, request_id):
+    def command(self, action, request_id, chinese_script=None):
+        if chinese_script is not None and chinese_script not in ("auto", "traditional", "simplified"):
+            return
         if type(request_id) is not int or request_id <= self.request_id:
             return
         if action not in ("capture", "dismiss"):
@@ -26,11 +29,11 @@ class ManualSession:
         if self.capture_task:
             self.capture_task.cancel()
         if action == "capture":
-            self.pending.put_nowait(request_id)
+            self.pending.put_nowait((request_id, chinese_script))
 
     async def run(self):
         while True:
-            request = await self.pending.get()
+            request, script = await self.pending.get()
             async def current_emit(event):
                 if request == self.request_id:
                     await self.emit({**event, "request_id": request})
@@ -52,12 +55,13 @@ class ManualSession:
                 preview.save(encoded, format="JPEG", quality=85)
                 await current_emit({"type": "screenshot", "image": "data:image/jpeg;base64," + base64.b64encode(encoded.getvalue()).decode("ascii")})
                 await current_emit({"type": "status", "status": "running", "busy": True, "message": "Recognizing Chinese locally…"})
-                pipeline = Pipeline(self.settings, self.ocr, self.pinyin, self.translator, current_emit)
+                settings = replace(self.settings, chinese_script=script) if script else self.settings
+                pipeline = Pipeline(settings, self.ocr, self.pinyin, self.translator, current_emit)
                 text = await pipeline.process(frame)
                 if request == self.request_id and text:
                     await pipeline.translate(text)
-                message = "Hold L5 to dismiss, then hold again to capture" if pipeline.current["lines"] else "No Chinese text found. Hold L5 to dismiss and try again."
+                message = "Hold L4 or L5 to dismiss, then hold again to capture" if pipeline.current["lines"] else "No Chinese text found. Hold L4 or L5 to dismiss and try again."
                 await current_emit({"type": "status", "status": "running", "busy": False, "message": message})
             except Exception as exc:
                 await current_emit({"type": "status", "status": "running", "busy": False,
-                                    "message": f"Capture failed: {exc}. Hold L5 to retry."})
+                                    "message": f"Capture failed: {exc}. Hold L4 or L5 to retry."})

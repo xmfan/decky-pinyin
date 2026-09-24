@@ -1,6 +1,6 @@
 import { findModuleChild, useQuickAccessVisible } from "@decky/ui";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { placeLabels } from "./layout";
+import { labelsOverlap, placeLabels } from "./layout";
 import type { Placement } from "./layout";
 import { rpc, Store, useStateSnapshot } from "./store";
 
@@ -31,7 +31,6 @@ export function Overlay({ store }: { store: Store }) {
   const result = state?.result;
   const screenshot = state?.screenshot;
   const [viewport, setViewport] = useState({ width: window.innerWidth, height: window.innerHeight });
-  const [natural, setNatural] = useState({ width: 1280, height: 800 });
   const [positions, setPositions] = useState<Placement[]>([]);
   const labels = useRef<(HTMLDivElement | null)[]>([]);
   useEffect(() => {
@@ -39,38 +38,54 @@ export function Overlay({ store }: { store: Store }) {
     window.addEventListener("resize", resize);
     return () => window.removeEventListener("resize", resize);
   }, []);
-  const sourceWidth = result?.width || natural.width;
-  const sourceHeight = result?.height || natural.height;
+  const sourceWidth = result?.width || 1280;
+  const sourceHeight = result?.height || 800;
   const scale = Math.min(viewport.width / sourceWidth, viewport.height / sourceHeight);
   const width = sourceWidth * scale, height = sourceHeight * scale;
+  const crowded = labelsOverlap(positions);
+  const cardWidth = (index: number) => {
+    const line = result!.lines[index];
+    const font = state!.settings.font_size;
+    const textWidth = line.tokens.reduce((sum, token) => sum + Math.max(token.text.length * font,
+      token.pinyin.length * font * .64 * .6) + 3, 0) + 64;
+    return Math.min(width - 24, 680, Math.max(360, textWidth, (line.rect.right - line.rect.left) * width + 28));
+  };
   useLayoutEffect(() => {
     if (!result) return;
-    const sizes = result.lines.map((_, index) => ({ width: labels.current[index]?.offsetWidth || 100, height: labels.current[index]?.offsetHeight || 48 }));
-    setPositions(placeLabels(result.lines.map((line) => line.rect), sizes, width, height));
+    const measure = () => {
+      const sizes = result.lines.map((_, index) => ({ width: labels.current[index]?.offsetWidth || 360, height: labels.current[index]?.offsetHeight || 48 }));
+      const next = placeLabels(result.lines.map((line) => line.rect), sizes, width, height);
+      setPositions(previous => JSON.stringify(previous) === JSON.stringify(next) ? previous : next);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    labels.current.forEach(node => { if (node) observer.observe(node); });
+    return () => observer.disconnect();
   }, [result, width, height, state?.settings.font_size, state?.settings.translation, menuOpen]);
   if (!overlaySupported || menuOpen || state?.status !== "running" || (!screenshot && !result?.lines.length)) return null;
   const speak = (line: number) => { void rpc.speak(line).then(store.update).catch(console.error); };
   const speaking = state.speech_status === "generating" || state.speech_status === "speaking";
   return <>
     <Composition />
-    <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 7999, pointerEvents: "none" }} />
+    <div data-game-dimmer style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.12)", zIndex: 7999, pointerEvents: "none" }} />
     <div data-screenshot-plane style={{ position: "fixed", left: (viewport.width - width) / 2,
       top: (viewport.height - height) / 2, width, height, zIndex: 8000, pointerEvents: "none" }}>
-      {screenshot && <img alt="Captured game screen" src={screenshot} onLoad={(event) => setNatural({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })}
-        style={{ width: "100%", height: "100%", objectFit: "contain" }} />}
-      <div aria-live="polite">
+      <div aria-live="polite" data-reading-list={crowded || undefined} style={crowded ? {
+        position: "absolute", right: 4, top: 36, maxHeight: height - 44,
+        width: Math.max(...(result?.lines.map((_, index) => cardWidth(index)) || [360])) + 8,
+        overflowY: "auto", pointerEvents: "auto", display: "flex", flexDirection: "column", gap: 8,
+      } : undefined}>
         {result?.lines.map((line, index) => {
-          const maxWidth = Math.max(100, width - 8);
-          const cardWidth = Math.min(maxWidth, Math.max(150, (line.rect.right - line.rect.left) * width + 28));
           const position = positions[index];
           return <div key={index} data-reading-label data-line={index} ref={(node) => { labels.current[index] = node; }}
-            style={{ position: "absolute", left: position?.left ?? line.rect.left * width,
-              top: position?.top ?? line.rect.top * height, width: cardWidth, maxHeight: height - 48,
+            style={{ position: crowded ? "relative" : "absolute", left: crowded ? undefined : position?.left ?? line.rect.left * width,
+              top: crowded ? undefined : position?.top ?? line.rect.top * height, width: cardWidth(index), maxHeight: height - 48,
+              flexShrink: 0, writingMode: "horizontal-tb",
               padding: "5px 8px", boxSizing: "border-box", borderRadius: 5, color: "#f5f7fa", background: "rgba(9,17,26,.94)",
               fontFamily: "sans-serif", overflowY: "auto", pointerEvents: "auto" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <div style={{ flex: 1, minWidth: 0, fontSize: state.settings.font_size, lineHeight: 1.85, overflowWrap: "anywhere" }}>
-                {line.tokens.map((token, i) => token.pinyin ? <ruby key={i} style={{ marginRight: 2 }}>{token.text}<rt style={{ fontSize: ".64em", color: "#98dfc2" }}>{token.pinyin}</rt></ruby> : <span key={i}>{token.text}</span>)}
+              <div style={{ flex: 1, minWidth: 0, fontSize: state.settings.font_size, lineHeight: 1.85, overflowWrap: "normal" }}>
+                {line.tokens.map((token, i) => token.pinyin ? <ruby key={i} style={{ display: "inline-flex", flexDirection: "column-reverse", alignItems: "center", verticalAlign: "bottom", marginRight: 3, whiteSpace: "nowrap", lineHeight: 1.3 }}>{token.text}<rt style={{ display: "block", fontSize: ".64em", color: "#98dfc2", lineHeight: 1.25 }}>{token.pinyin}</rt></ruby> : <span key={i}>{token.text}</span>)}
               </div>
               <button aria-label={`Speak Chinese line ${index + 1}`} onClick={() => speak(index)}
                 style={{ color: "#98dfc2", background: "transparent", border: 0, padding: 5, fontSize: 18 }}>🔊</button>
@@ -84,7 +99,8 @@ export function Overlay({ store }: { store: Store }) {
     </div>
     <div style={{ position: "fixed", right: 8, top: 6, zIndex: 8001, padding: "4px 8px", borderRadius: 4,
       background: "rgba(9,17,26,.88)", color: "#a4ccad", fontSize: 11, pointerEvents: "auto" }}>
-      L5 · 0.2s to dismiss
+      L4 / L5 · 0.2s to dismiss · {result?.lines.length || 0} labels
+      {crowded && <span> · Scroll to read all labels</span>}
       {state.busy && <span> · {state.message}</span>}
       {!state.busy && !result?.lines.length && <span> · {state.message}</span>}
       {speaking && <button onClick={() => void rpc.stopSpeech().then(store.update)} style={{ marginLeft: 8 }}>Stop speech</button>}

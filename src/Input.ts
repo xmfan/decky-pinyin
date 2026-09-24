@@ -45,7 +45,8 @@ export enum InputMode {
     TOUCHPAD_COMBO = 6, // Left touchpad touch + Right touchpad touch combination
     L3_BUTTON = 7,    // L3 stick click
     R3_BUTTON = 8,    // R3 stick click
-    L3_R3_COMBO = 9   // L3 + R3 combination
+    L3_R3_COMBO = 9,   // L3 + R3 combination
+    SCRIPT_BUTTONS = 10 // L4 simplified / L5 traditional
 }
 
 export enum ActionType {
@@ -91,7 +92,7 @@ const HIDRAW_BUTTON_MAP: Record<string, Button> = {
 };
 
 export class Input {
-    private onButtonsPressedListeners: Array<(actionType: ActionType) => void> = [];
+    private onButtonsPressedListeners: Array<(actionType: ActionType, script?: "simplified" | "traditional") => void> = [];
     private onProgressListeners: Array<(progressInfo: ProgressInfo) => void> = [];
     private touchStartTime: number | null = null;
 
@@ -115,6 +116,7 @@ export class Input {
     private clearCooldownTimeoutId: ReturnType<typeof setTimeout> | null = null;
     private cooldownDuration = 50; // one input poll for short holds
 
+    private scriptButton: Button | null = null;
     private inputMode: InputMode = InputMode.L5_BUTTON;
 
     private translateHoldTime = 1000;
@@ -463,6 +465,17 @@ export class Input {
     }
 
     private OnButtonsPressed(buttons: Button[]): void {
+        if (this.inputMode === InputMode.SCRIPT_BUTTONS) {
+            const key = buttons.includes(Button.L4) === buttons.includes(Button.L5) ? null
+                : buttons.includes(Button.L4) ? Button.L4 : Button.L5;
+            if (key !== this.scriptButton || key === null) {
+                this.stopProgressAnimation();
+                this.waitingForRelease = false;
+                this.leftTouchpadTouched = this.rightTouchpadTouched = false;
+            }
+            this.scriptButton = key;
+            if (key === null) return;
+        }
         // A short L5 hold can be released inside the cooldown. Always clear
         // its pressed state so the next hold is not swallowed.
         if (this.inputMode === InputMode.L5_BUTTON && !buttons.includes(Button.L5)) {
@@ -539,6 +552,10 @@ export class Input {
         let buttonName = '';
 
         switch (this.inputMode) {
+            case InputMode.SCRIPT_BUTTONS:
+                buttonPressed = this.scriptButton !== null;
+                buttonName = this.scriptButton === Button.L4 ? 'L4' : 'L5';
+                break;
             case InputMode.L4_BUTTON:
                 buttonPressed = buttons.includes(Button.L4);
                 buttonName = 'L4';
@@ -640,7 +657,7 @@ export class Input {
                         this.lastActionTime = Date.now();
                         const actionType = this.overlayVisible ? ActionType.DISMISS : ActionType.TRANSLATE;
                         logger.info('Input', `Action triggered: ${ActionType[actionType]}`);
-                        this.onButtonsPressedListeners.forEach(cb => cb(actionType));
+                        this.onButtonsPressedListeners.forEach(cb => cb(actionType, this.inputMode === InputMode.SCRIPT_BUTTONS ? (this.scriptButton === Button.L4 ? "simplified" : "traditional") : undefined));
                         this.stopProgressAnimation();
                         this.waitingForRelease = true;
                         if (this.clearCooldownTimeoutId) clearTimeout(this.clearCooldownTimeoutId);
@@ -666,12 +683,12 @@ export class Input {
         this.rightTouchpadTouched = buttonPressed;
     }
 
-    onShortcutPressed(callback: (actionType: ActionType) => void): void {
+    onShortcutPressed(callback: (actionType: ActionType, script?: "simplified" | "traditional") => void): void {
         logger.debug('Input', 'Adding shortcut listener');
         this.onButtonsPressedListeners.push(callback);
     }
 
-    offShortcutPressed(callback: (actionType: ActionType) => void): void {
+    offShortcutPressed(callback: (actionType: ActionType, script?: "simplified" | "traditional") => void): void {
         logger.debug('Input', 'Removing shortcut listener');
         const idx = this.onButtonsPressedListeners.indexOf(callback);
         if (idx !== -1) this.onButtonsPressedListeners.splice(idx, 1);

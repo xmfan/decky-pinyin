@@ -67,16 +67,16 @@ async def test_direct_capture_starts_worker_without_frontend_ack(plugin_module):
     await plugin._main()
     plugin.state.update(status="running", result={"lines": ["old"]}, screenshot="old image")
     commands = []
-    async def send(action):
+    async def send(action, script=None):
         plugin.request_id += 1
-        commands.append(action)
+        commands.append((action, script))
     plugin._send_command = send
-    state = await plugin.capture()
-    assert commands == ["capture"]
+    state = await plugin.capture("traditional")
+    assert commands == [("capture", "traditional")]
     assert state["busy"] and state["screenshot"] is None and state["result"] is None
     assert await plugin.get_updates(state["version"]) is None
     await plugin.dismiss()
-    assert commands == ["capture", "dismiss"] and not plugin.state["busy"]
+    assert commands == [("capture", "traditional"), ("dismiss", None)] and not plugin.state["busy"]
     assert (await plugin.get_updates(state["version"]))["result"] is None
     await plugin._unload()
 

@@ -24,3 +24,5 @@ Copied controller initialization/report tests, snapshot command/retry/cleanup te
 ## 0.6.0 adaptations after successful device capture
 
 The user confirmed 0.5.1 works on their Deck. Capture remains unchanged. Input is now configured for L5 with 200 ms activation/dismissal and 50 ms polling/cooldown. L5 release resets pressed state even within cooldown so quick repeated holds are not swallowed. Labels use OCR rectangles and per-line translation. Offline Piper speech is a separate, cancellable process; it does not change the screenshot path.
+
+0.7.0 keeps the ported screenshot acquisition and HID handling, adds L4 Simplified / L5 Traditional per-capture selection, and draws labels over lightly dimmed live gameplay instead of rendering the captured screenshot. This addresses the user's dark-screen report while preserving the working acquisition path.
