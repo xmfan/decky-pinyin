@@ -3,6 +3,7 @@ import argparse
 import asyncio
 import contextlib
 import json
+import logging
 import os
 from pathlib import Path
 import signal
@@ -19,6 +20,8 @@ enforce_offline()
 
 protocol = sys.stdout
 sys.stdout = sys.stderr  # Third-party prints must not corrupt the protocol.
+logging.basicConfig(level=logging.INFO)
+logging.getLogger("backend.capture").setLevel(logging.DEBUG)
 
 
 async def emit(event):
@@ -44,7 +47,7 @@ async def run(args):
     try:
         label = "GPU-assisted OCR" if ocr.device == "gpu" else "CPU OCR"
         await emit({"type": "status", "status": "running", "busy": False,
-                    "message": f"{label} · Ready. Tap L4 to capture."})
+                    "message": f"{label} · Ready. Hold L4 for 1 second to capture."})
         while line := await reader.readline():
             command = json.loads(line)
             session.command(command.get("action"), command.get("request_id"))

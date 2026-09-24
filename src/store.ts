@@ -3,11 +3,11 @@ import { useSyncExternalStore } from "react";
 import type { Settings, State } from "./types";
 
 export const rpc = {
+  updates: callable<[since: number], State | null>("get_updates"),
   get: callable<[], State>("get_state"),
   start: callable<[], State>("start"),
   stop: callable<[], State>("stop"),
   capture: callable<[], State>("capture"),
-  captureReady: callable<[request: number], State>("capture_ready"),
   dismiss: callable<[], State>("dismiss"),
   save: callable<[settings: Settings], State>("save_settings"),
 };

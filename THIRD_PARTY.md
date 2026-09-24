@@ -5,7 +5,7 @@ Decky Pinyin's source is GPL-3.0-only. Bundled dependencies and model weights re
 | Component | Source | License / use |
 | --- | --- | --- |
 | Decky API/UI/template | https://github.com/SteamDeckHomebrew | BSD-3-Clause; plugin framework |
-| Decky-Translator | https://github.com/cat-in-a-box/Decky-Translator | GPL-3.0; reference for Gamescope snapshots (`backend/capture.py`), L4 HID input (`backend/buttons.py`), and the Steam composition hook (`src/Overlay.tsx`) |
+| Decky-Translator | https://github.com/cat-in-a-box/Decky-Translator | GPL-3.0; copied HID monitor, frontend Input and ActivationIndicator, PipeWire screenshot methods; adapted direct-capture controller and screenshot composition. Pinned source and modifications: `docs/UPSTREAM_PORT.md` |
 | g2pM, Kyubyong Park and Seanie Lee | https://github.com/kakaobrain/g2pM | Apache-2.0; neural Mandarin pronunciation model and bundled dictionary |
 | pypinyin | https://github.com/mozillazg/python-pinyin | MIT; phrase readings, tone formatting, unknown-character fallback |
 | OpenCC Python | https://github.com/yichen0831/opencc-python | Apache-2.0; traditional-to-simplified normalization |

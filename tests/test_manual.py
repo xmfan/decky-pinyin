@@ -7,91 +7,9 @@ import threading
 import numpy as np
 import pytest
 
-from backend.buttons import L4Gesture, l4_pressed
-from backend.capture import SnapshotCapture
 from backend.config import Settings
 from backend.manual import ManualSession
 from backend.pipeline import Frame
-
-
-def test_l4_uses_deck_report_and_correct_high_bit():
-    packet = bytearray(64)
-    packet[:3] = b"\x01\x00\x09"
-    packet[13] = 2
-    assert l4_pressed(packet) is True
-    packet[13] = 4  # R4
-    assert l4_pressed(packet) is False
-    packet[2] = 1  # Another device's report
-    assert l4_pressed(packet) is None
-    assert l4_pressed(b"\x01") is None
-
-
-@pytest.mark.asyncio
-async def test_tap_captures_hold_dismisses_once_and_release_does_not_capture():
-    events = []
-    gesture = L4Gesture(events.append, hold_seconds=.01)
-    gesture.update(True)  # Already held while enabling.
-    gesture.update(False)
-    assert not events
-    gesture.update(True)
-    gesture.update(False)
-    assert events == ["capture"]
-    gesture.update(True)
-    await asyncio.sleep(.03)
-    gesture.update(True)
-    gesture.update(False)
-    assert events == ["capture", "dismiss"]
-    gesture.update(True)
-    gesture.close()
-    await asyncio.sleep(.03)
-    assert events == ["capture", "dismiss"]
-
-
-@pytest.mark.asyncio
-async def test_snapshot_png_failure_falls_back_to_latest_raw_frame(monkeypatch):
-    monkeypatch.setattr("backend.capture.shutil.which", lambda _: "/test/bin")
-    capture = SnapshotCapture()
-    capture.pngenc = True
-    commands = []
-    async def execute(command, _timeout):
-        commands.append(command)
-        if command[0] == "pw-dump":
-            return json.dumps([{"id": 42, "info": {"props": {"node.name": "gamescope", "media.class": "Video/Source"},
-                "params": {"EnumFormat": [{"size": {"width": 4, "height": 2}}]}}}]).encode(), "", 0
-        if "pngenc" in command:
-            return b"", "PNG failed", 1
-        return bytes([0] * 24 + [127] * 24 + [255] * 24), "", 0
-    capture._command = execute
-    frame = await capture.take()
-    assert frame.rgb.shape == (2, 4, 3) and frame.rgb.min() == 255
-    assert all("videorate" not in c for c in commands)
-    assert "num-buffers=3" in commands[-1]
-    assert "path=42" in commands[-1]
-
-
-@pytest.mark.asyncio
-async def test_snapshot_failure_reports_received_bytes(monkeypatch):
-    monkeypatch.setattr("backend.capture.shutil.which", lambda _: "/test/bin")
-    capture = SnapshotCapture()
-    capture.pngenc = False
-    async def execute(command, _timeout):
-        if command[0] == "pw-dump":
-            return json.dumps([{"id": 42, "info": {"props": {"node.name": "gamescope", "media.class": "Video/Source"},
-                "params": {"EnumFormat": [{"size": {"width": 4, "height": 2}}]}}}]).encode(), "", 0
-        return b"abc", "not-negotiated", 1
-    capture._command = execute
-    with pytest.raises(RuntimeError, match="3 bytes.*not-negotiated"):
-        await capture.take()
-
-
-@pytest.mark.asyncio
-async def test_snapshot_timeout_reaps_its_child_process():
-    capture = SnapshotCapture()
-    out, _, code = await capture._command([sys.executable, "-c", "import os,time; print(os.getpid(),flush=True); time.sleep(60)"], .2)
-    assert code != 0
-    pid = int(out.strip())
-    with pytest.raises(ProcessLookupError):
-        os.kill(pid, 0)
 
 
 async def wait_until(predicate):

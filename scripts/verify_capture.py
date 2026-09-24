@@ -23,20 +23,13 @@ async def main():
         provider = None
         session = None
         capture = SnapshotCapture()
-        original_command = capture._command
-        async def checked_command(command, timeout):
-            result = await original_command(command, timeout)
-            if "snapshot=true" in command:
-                assert result[0].startswith(b"\x89PNG\r\n\x1a\n"), result[1:]
-            return result
-        capture._command = checked_command
         try:
             for _ in range(100):
                 if Path(runtime, "pipewire-0").exists():
                     break
                 await asyncio.sleep(.05)
             session = await asyncio.create_subprocess_exec("pipewire-media-session", stdout=asyncio.subprocess.DEVNULL, stderr=diagnostic)
-            provider = await asyncio.create_subprocess_exec("gst-launch-1.0", "-q", "videotestsrc", "is-live=true", "pattern=ball",
+            provider = await asyncio.create_subprocess_exec("gst-launch-1.0", "-q", "videotestsrc", "is-live=true", "pattern=snow",
                 "!", "video/x-raw,format=BGRx,width=1280,height=800,framerate=30/1", "!", "pipewiresink", "mode=provide", "sync=false",
                 "stream-properties=props,node.name=gamescope,media.class=Video/Source", stdout=asyncio.subprocess.DEVNULL, stderr=diagnostic)
             for _ in range(50):
@@ -58,8 +51,8 @@ async def main():
                 assert frame.rgb.shape == (800, 1280, 3)
                 assert frame.rgb.max() > 0, "Expected non-black test source"
                 seen.append(frame.number)
-            assert capture.pngenc, "PNG capture must be available in this test image"
-            capture.pngenc = False
+            assert capture._has_pngenc, "PNG capture must be available in this test image"
+            capture._has_pngenc = False
             raw = await capture.take()
             assert raw.rgb.shape == (800, 1280, 3) and raw.rgb.max() > 0
             report = {"source": "synthetic PipeWire Video/Source, not a physical Deck", "frames": seen,

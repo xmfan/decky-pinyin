@@ -11,9 +11,7 @@ await build({
   entryPoints: [path.join(root, "tests/overlay-harness.tsx")], bundle: true, jsx: "automatic",
   outfile: path.join(root, ".cache/overlay-preview.js"),
   plugins: [{ name: "decky-test-shim", setup(builder) {
-    builder.onResolve({ filter: /^@decky\/(ui|api)$/ }, (args) => ({ path: args.path, namespace: "decky-shim" }));
-    builder.onLoad({ filter: /.*/, namespace: "decky-shim" }, () => ({ contents:
-      "export const findModuleChild=()=>()=>{}; export const useQuickAccessVisible=()=>false; export const Navigation={CloseSideMenus:()=>{window.menuClosed=true;}}; export const callable=(name)=>(...args)=>{if(name==='capture_ready'){window.captureAck={args,overlayVisible:!!document.querySelector('ruby'),menuClosed:window.menuClosed};} return Promise.resolve(window.previewState||{});};" }));
+    builder.onResolve({ filter: /^@decky\/(ui|api)$/ }, () => ({ path: path.join(root, "tests/decky-shim.ts") }));
   } }],
 });
 await writeFile(path.join(root, ".cache/overlay-preview.html"), `<!doctype html><html><head><meta charset="utf-8"><title>Decky Pinyin overlay test</title></head><body style="margin:0;background:#141b26"><img src="../artifacts/ocr-fixture.png" style="position:fixed;width:100vw;height:100vh;object-fit:fill"/><div id="root"></div><script src="./overlay-preview.js"></script></body></html>`);
@@ -51,18 +49,37 @@ try {
   await page.evaluate(() => window.preview.large());
   await page.waitForTimeout(100);
   await checkBounds();
-  await page.evaluate(() => window.preview.capture());
-  await page.waitForTimeout(50);
-  assert.equal(await page.locator("ruby").count(), 0, "Old overlay must hide before capture");
-  assert.equal(await page.evaluate(() => window.captureAck), undefined, "Capture acknowledged before settling");
-  await page.clock.runFor(300);
-  const ack = await page.evaluate(() => window.captureAck);
-  assert.deepEqual(ack, { args: [10], overlayVisible: false, menuClosed: true });
   await page.evaluate(() => window.preview.stop());
   await page.waitForTimeout(100);
   assert.equal(await page.locator("ruby").count(), 0);
+  await page.evaluate(() => window.preview.beginController());
+  await page.clock.runFor(200);
+  await page.evaluate(() => window.preview.press());
+  await page.clock.runFor(900);
+  assert.equal((await page.evaluate(() => window.preview.captures())).length, 0, "Short hold should not capture");
+  await page.clock.runFor(700);
+  assert.deepEqual(await page.evaluate(() => window.preview.captures()), [{ overlayVisible: false, menuClosed: true }]);
+  assert.equal(await page.locator('img[alt="Captured game screen"]').count(), 1, "Capture should show a screenshot before OCR");
+  await page.evaluate(() => { window.preview.release(); window.preview.finish(); });
+  await page.clock.runFor(600);
+  assert(await page.locator("ruby").count() > 0, "Polling must recover model results without a frontend event");
+  await page.evaluate(() => window.preview.press());
+  await page.clock.runFor(750);
+  assert.equal(await page.locator('img[alt="Captured game screen"]').count(), 0, "Second hold dismisses screenshot");
+  assert.equal(await page.locator("ruby").count(), 0);
+  await page.evaluate(() => window.preview.release());
+  await page.clock.runFor(300);
+  await page.evaluate(() => window.preview.capture());
+  await page.clock.runFor(100);
+  await page.evaluate(() => window.preview.dismiss());
+  await page.clock.runFor(400);
+  assert.equal((await page.evaluate(() => window.preview.captures())).length, 1, "Dismiss must cancel pending direct capture");
+  await page.evaluate(() => window.preview.capture());
+  await page.clock.runFor(400);
+  assert.equal((await page.evaluate(() => window.preview.captures())).length, 2, "Panel capture uses the direct path too");
+  await page.evaluate(() => window.preview.closeController());
   assert.deepEqual(errors, []);
-  console.log("Overlay verified at 1280×800: ruby alignment, text fit, capture hides overlay before acknowledgment, stale-state rejection, stop cleanup. Steam composition hook is stubbed; physical Deck still required.");
+  console.log("Overlay verified at 1280×800: ruby alignment, text fit, original L4 hold/polling, direct capture, screenshot before OCR, dismiss cancellation, polling recovery. Steam composition hook is stubbed; physical Deck still required.");
 } finally {
   await browser.close();
 }

@@ -45,3 +45,9 @@ A subsequent translation experiment verified native GPU encoder and decoder exec
 Removed all percentage-based capture settings and cropping. Manual OCR now receives the entire frame. Capture first clears the overlay and requests frontend preparation; the frontend closes Quick Access and allows 250 ms after React commits the cleared view before acknowledging. Only the current, acknowledged request can reach the screenshot worker. Dismissal or a newer tap invalidates an older acknowledgment. Missing acknowledgment times out with a retry message instead of capturing the overlay.
 
 37 Python tests pass, including full-frame corner preservation and the capture acknowledgment sequence. The browser check verifies the overlay is absent before acknowledgment and the menu-close command is issued. TypeScript and production builds pass. This does not establish Steam compositor timing on hardware; repeat the physical-device acceptance procedure.
+
+## Original plugin flow (0.5.0)
+
+The user reported that both L4 and Capture now did nothing in 0.4.0 and requested the original plugin's flow with our local models. This update copies the upstream HID monitor, frontend button polling/hold handling, activation indicator, and PipeWire PNG/RGB methods. The overlay acknowledgment gate and previous forced capture node/caps are removed. A screenshot is displayed before inference, followed by our existing pinyin and English output. See `UPSTREAM_PORT.md` for pinned provenance and adaptations.
+
+34 Python tests passed, including original controller initialization/report decoding, snapshot retry/native RGB, child-process cancellation, direct worker command dispatch and full-frame OCR. TypeScript/build and browser tests passed: one-second hold capture, half-second hold dismiss, snapshot display before OCR, direct panel capture, cancellation and polling recovery. Hardware remains unverified.

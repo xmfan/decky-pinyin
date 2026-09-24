@@ -31,6 +31,6 @@ export interface State {
   settings: Settings;
   installed: boolean;
   busy?: boolean;
-  capture_request?: number | null;
+  screenshot?: string | null;
   input_status?: string;
 }

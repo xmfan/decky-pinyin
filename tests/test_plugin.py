@@ -61,31 +61,21 @@ async def test_reject_invalid_settings_before_stopping(plugin_module):
 
 
 @pytest.mark.asyncio
-async def test_capture_waits_for_hidden_overlay_and_rejects_stale_ack(plugin_module):
-    module, events = plugin_module
+async def test_direct_capture_starts_worker_without_frontend_ack(plugin_module):
+    module, _ = plugin_module
     plugin = module.Plugin()
     await plugin._main()
-    plugin.state.update(status="running", result={"lines": ["old overlay"]})
+    plugin.state.update(status="running", result={"lines": ["old"]}, screenshot="old image")
     commands = []
     async def send(action):
         plugin.request_id += 1
         commands.append(action)
     plugin._send_command = send
-    try:
-        first = await plugin.capture()
-        assert first["result"] is None and first["busy"]
-        assert commands == ["dismiss"]  # No screenshot before frontend acknowledgment.
-        second = await plugin.capture()
-        await plugin.capture_ready(first["capture_request"])
-        assert commands == ["dismiss", "dismiss"]
-        await plugin.capture_ready(second["capture_request"])
-        assert commands == ["dismiss", "dismiss", "capture"]
-        await plugin.capture_ready(second["capture_request"])
-        assert commands.count("capture") == 1
-        third = await plugin.capture()
-        await plugin.dismiss()
-        await plugin.capture_ready(third["capture_request"])
-        assert commands.count("capture") == 1
-        assert plugin.state["result"] is None and not plugin.state["busy"]
-    finally:
-        await plugin._unload()
+    state = await plugin.capture()
+    assert commands == ["capture"]
+    assert state["busy"] and state["screenshot"] is None and state["result"] is None
+    assert await plugin.get_updates(state["version"]) is None
+    await plugin.dismiss()
+    assert commands == ["capture", "dismiss"] and not plugin.state["busy"]
+    assert (await plugin.get_updates(state["version"]))["result"] is None
+    await plugin._unload()

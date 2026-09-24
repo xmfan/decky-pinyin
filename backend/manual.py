@@ -1,5 +1,8 @@
 """Serialize manual captures while dropping superseded work and dismissed results."""
 import asyncio
+import base64
+from io import BytesIO
+from PIL import Image
 
 from .pipeline import Pipeline
 
@@ -43,12 +46,18 @@ class ManualSession:
                     self.capture_task = None
                 if request != self.request_id:
                     continue
+                preview = Image.fromarray(frame.rgb)
+                preview.thumbnail((1280, 800))
+                encoded = BytesIO()
+                preview.save(encoded, format="JPEG", quality=85)
+                await current_emit({"type": "screenshot", "image": "data:image/jpeg;base64," + base64.b64encode(encoded.getvalue()).decode("ascii")})
+                await current_emit({"type": "status", "status": "running", "busy": True, "message": "Recognizing Chinese locally…"})
                 pipeline = Pipeline(self.settings, self.ocr, self.pinyin, self.translator, current_emit)
                 await pipeline.process(frame)
                 if request == self.request_id and not pipeline.pending.empty():
                     await pipeline.translate_item(*pipeline.pending.get_nowait())
-                message = "Tap L4 to capture again · hold L4 to dismiss" if pipeline.current["lines"] else "No Chinese text found. Tap L4 to try again."
+                message = "Hold L4 to dismiss, then hold again to capture" if pipeline.current["lines"] else "No Chinese text found. Hold L4 to dismiss and try again."
                 await current_emit({"type": "status", "status": "running", "busy": False, "message": message})
             except Exception as exc:
                 await current_emit({"type": "status", "status": "running", "busy": False,
-                                    "message": f"Capture failed: {exc}. Tap L4 to retry."})
+                                    "message": f"Capture failed: {exc}. Hold L4 to retry."})
